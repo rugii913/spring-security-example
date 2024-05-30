@@ -1,3 +1,7 @@
 spring:
   application:
     name: springsecurityexample
+  security:
+    user: # https://docs.spring.io/spring-boot/appendix/application-properties/index.html#appendix.application-properties.security
+      name: admin
+      password: admin
