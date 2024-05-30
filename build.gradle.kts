@@ -19,10 +19,18 @@ repositories {
 }
 
 dependencies {
-    implementation("org.springframework.boot:spring-boot-starter-web")
+    /* Kotlin 관련 */
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
     implementation("org.jetbrains.kotlin:kotlin-reflect")
+
+    /* Spring Web */
+    implementation("org.springframework.boot:spring-boot-starter-web")
+    /* Spring Security */
+    implementation("org.springframework.boot:spring-boot-starter-security")
+
+    /* test 관련 */
     testImplementation("org.springframework.boot:spring-boot-starter-test")
+    testImplementation("org.springframework.security:spring-security-test") // Spring Security 관련 test 종속성
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
