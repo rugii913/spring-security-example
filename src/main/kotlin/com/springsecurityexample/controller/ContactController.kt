@@ -4,8 +4,10 @@ import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RestController
 
 @RestController
-class HelloController {
+class ContactController {
 
-    @GetMapping("/")
-    fun hello() = "hello world!"
+    @GetMapping("/contact")
+    fun saveContactInquiryDetails(): String {
+        return "Inquiry details are saved to the DB"
+    }
 }
