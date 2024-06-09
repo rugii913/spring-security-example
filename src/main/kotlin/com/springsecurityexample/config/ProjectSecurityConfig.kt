@@ -8,6 +8,8 @@ import org.springframework.security.config.Customizer
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.core.userdetails.User
 import org.springframework.security.core.userdetails.UserDetails
+import org.springframework.security.crypto.password.NoOpPasswordEncoder
+import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.security.provisioning.InMemoryUserDetailsManager
 import org.springframework.security.web.SecurityFilterChain
 
@@ -73,27 +75,58 @@ class ProjectSecurityConfig {
     * */
     @Bean
     fun userDetailsService(): InMemoryUserDetailsManager {
-
         /*
         * InMemoryUserDetailsManager 사용 방법 1
         * - User.withDefaultPasswordEncoder() 호출 시 return으로 받은 UserBuilder 객체 사용
+        * - 간단하게 DefaultPasswordEncoder를 사용하는 형태
+        *   - withDefaultPasswordEncoder() 메서드 내에서는 기본적인 PasswordEncoder()를 property로 갖고 있도록 UserBuilder 객체를 설정
         * - cf. UserBuilder type을 반환하는 withDefaultPasswordEncoder() 메서드는 deprecated 표시가 되어있지만, production에서 사용하기 부적합함을 경고하기 위해 표시한 것이고, 지원 중단 예정은 아님
-        *   - 간단하게 사용 방법만 보기 위해 DefaultPasswordEncoder를 사용함
+        * */
+//        val admin1: UserDetails = User
+//            .withDefaultPasswordEncoder()
+//            .username("admin1")
+//            .password("admin1")
+//            .authorities("admin")
+//            .build()
+//
+//        val user1: UserDetails = User
+//            .withDefaultPasswordEncoder()
+//            .username("user1")
+//            .password("user1")
+//            .authorities("read")
+//            .build()
+
+        /*
+        * InMemoryUserDetailsManager 사용 방법 2
+        * - User.withUsername() 호출 시 return으로 받은 UserBuilder 객체 사용
+        * - cf. 동작 관련하여 다음 참고 https://velog.io/@fastdodge7/Spring-Security-PasswordEncoder를-빈으로-등록하는-이유는
+        *   - UserDetails를 등록할 때는 passwordEncoder property를 직접 등록해줬고
+        *   - InitializeUserDetailsBeanManagerConfigurer의 configure() 메서드에서 볼 수 있듯
+        *     - 빈으로 등록된 PasswordEncoder가 있다면 DaoAuthenticationProvider의 setPasswordEncoder()를 호출하여 
+        *     - 등록된 PasswordEncoder 빈을 DaoAuthenticationProvider(AuthenticationProvider의 하위 type)의 property로 set 해줌
+        * - PasswordEncoder는 NoOpPasswordEncoder를 빈으로 등록하여 사용
         * */
         val admin1: UserDetails = User
-            .withDefaultPasswordEncoder()
-            .username("admin1")
+            .withUsername("admin1")
             .password("admin1")
+            .passwordEncoder { password -> password } // 예제와 다르게 명확하게 추가해둠 - 하지만 UserBuilder 초기화 시 property로 갖고 있는 passwordEncoder와 같기 때문에 없어도 상관 없음
             .authorities("admin")
             .build()
 
         val user1: UserDetails = User
-            .withDefaultPasswordEncoder()
-            .username("user1")
+            .withUsername("user1")
             .password("user1")
+            .passwordEncoder { password -> password } // 예제와 다르게 명확하게 추가해둠 - 하지만 UserBuilder 초기화 시 property로 갖고 있는 passwordEncoder와 같기 때문에 의미는 상관 없음
             .authorities("read")
             .build()
 
         return InMemoryUserDetailsManager(admin1, user1)
     }
+
+    /*
+    * - cf. NoOpPasswordEncoder 역시 deprecated 표시가 되어있지만, production에서 사용하기 부적합함을 경고하기 위해 표시한 것이고, 지원 중단 예정은 아님
+    *   - 단지 CharSequence type rawPassword에 대해 toString()을 호출하여 단지 plain text로 다루도록 함
+    * */
+    @Bean
+    fun passwordEncoder(): PasswordEncoder = NoOpPasswordEncoder.getInstance()
 }
