@@ -6,6 +6,9 @@ import org.springframework.context.annotation.Configuration
 import org.springframework.core.annotation.Order
 import org.springframework.security.config.Customizer
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
+import org.springframework.security.core.userdetails.User
+import org.springframework.security.core.userdetails.UserDetails
+import org.springframework.security.provisioning.InMemoryUserDetailsManager
 import org.springframework.security.web.SecurityFilterChain
 
 @Configuration
@@ -56,5 +59,41 @@ class ProjectSecurityConfig {
             .formLogin(Customizer.withDefaults())
             .httpBasic(Customizer.withDefaults())
             .build()
+    }
+
+    /*
+    * - org.springframework.boot.autoconfigure.security 패키지의 User가 아닌 org.springframework.security.core.userdetails 패키지의 User
+    *   - org.springframework.security.core.userdetails.User는 UserDetails 인터페이스를 구현하는 클래스
+    *   - User의 빌더 패턴 내부 static 클래스인 UserBuilder를 이용하여 UserDetails type 객체를 반환
+    *     - 빌더 패턴 UserBuilder 객체를 이용하여 username, password, authorities 등을 property로 설정하고
+    *     - build() 호출 시 입력된 property를 활용하여 User 객체를 생성하여 반환하는 코드 확인 가능
+    * - InMemoryUserDetailsManager() 생성자에서는 다음의 로직을 실행
+    *   - createUser()를 호출하여 인자로 받은 UserDetails type 객체를
+    *   - InMemoryUserDetailsManager 객체에서 알고 있는 HashMap 자료 구조 user property에 put 해둠
+    * */
+    @Bean
+    fun userDetailsService(): InMemoryUserDetailsManager {
+
+        /*
+        * InMemoryUserDetailsManager 사용 방법 1
+        * - User.withDefaultPasswordEncoder() 호출 시 return으로 받은 UserBuilder 객체 사용
+        * - cf. UserBuilder type을 반환하는 withDefaultPasswordEncoder() 메서드는 deprecated 표시가 되어있지만, production에서 사용하기 부적합함을 경고하기 위해 표시한 것이고, 지원 중단 예정은 아님
+        *   - 간단하게 사용 방법만 보기 위해 DefaultPasswordEncoder를 사용함
+        * */
+        val admin1: UserDetails = User
+            .withDefaultPasswordEncoder()
+            .username("admin1")
+            .password("admin1")
+            .authorities("admin")
+            .build()
+
+        val user1: UserDetails = User
+            .withDefaultPasswordEncoder()
+            .username("user1")
+            .password("user1")
+            .authorities("read")
+            .build()
+
+        return InMemoryUserDetailsManager(admin1, user1)
     }
 }
