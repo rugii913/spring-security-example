@@ -1,5 +1,6 @@
 package com.springsecurityexample.config
 
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.boot.autoconfigure.security.SecurityProperties
 import org.springframework.boot.autoconfigure.security.servlet.PathRequest
 import org.springframework.context.annotation.Bean
@@ -7,7 +8,8 @@ import org.springframework.context.annotation.Configuration
 import org.springframework.core.annotation.Order
 import org.springframework.security.config.Customizer
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
-import org.springframework.security.config.annotation.web.configurers.HeadersConfigurer.FrameOptionsConfig
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity
+import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer
 import org.springframework.security.core.userdetails.User
 import org.springframework.security.core.userdetails.UserDetails
 import org.springframework.security.crypto.password.NoOpPasswordEncoder
@@ -15,6 +17,7 @@ import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.security.provisioning.InMemoryUserDetailsManager
 import org.springframework.security.web.SecurityFilterChain
 
+@EnableWebSecurity
 @Configuration
 class ProjectSecurityConfig {
     /*
@@ -55,13 +58,10 @@ class ProjectSecurityConfig {
     @Order(SecurityProperties.BASIC_AUTH_ORDER)
     fun defaultSecurityFilterChain(http: HttpSecurity): SecurityFilterChain {
         return http
-            .headers { it.frameOptions { frameOptionsConfig -> frameOptionsConfig.sameOrigin() } }
-            .csrf { it.ignoringRequestMatchers(PathRequest.toH2Console()) }
             .authorizeHttpRequests { requests ->
                 requests
                     .requestMatchers("/my-account", "my-balance", "/my-loans", "/my-cards").authenticated()
                     .requestMatchers("/notices", "/contact").permitAll()
-                    .requestMatchers(PathRequest.toH2Console()).permitAll()
             }
             .formLogin(Customizer.withDefaults())
             .httpBasic(Customizer.withDefaults())
@@ -134,4 +134,14 @@ class ProjectSecurityConfig {
     * */
     @Bean
     fun passwordEncoder(): PasswordEncoder = NoOpPasswordEncoder.getInstance()
+
+    /*
+    * - 참고 https://dukcode.github.io/spring/h2-console-with-spring-security/
+    *   - h2 console에 대한 요청이 Spring Security 필터를 통과하지 않도록 함
+    * - cf. Spring 시작 시 WARN 메시지로 ignore 하는 방식은 권장되지 않는다는 출력 발생, 하지만 production에서 사용할 것이 아니므로 괜찮음
+    * */
+    @Bean
+    @ConditionalOnProperty(name = ["spring.h2.console.enabled"], havingValue = "true")
+    fun configureH2ConsoleEnable() =
+        WebSecurityCustomizer { web -> web.ignoring().requestMatchers(PathRequest.toH2Console()) }
 }
