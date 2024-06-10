@@ -32,6 +32,11 @@ dependencies {
     implementation("org.springframework.ldap:spring-ldap-core")
     implementation("org.springframework.security:spring-security-ldap")
 
+    /* JDBC */
+    implementation("org.springframework.boot:spring-boot-starter-jdbc")
+    /* H2 DB */
+    implementation("com.h2database:h2")
+
     /* test 관련 */
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation("org.springframework.security:spring-security-test") // Spring Security 관련 test 종속성

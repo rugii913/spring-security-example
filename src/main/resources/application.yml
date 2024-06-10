@@ -1,6 +1,14 @@
 spring:
   application:
     name: springsecurityexample
+  h2: # 예제와는 다르게 간단하게 H2 로컬 DB 이용, application.yml 참고 https://kukim.tistory.com/105
+    console:
+      enabled: true
+  datasource:
+    driver-class-name: org.h2.Driver
+    url: jdbc:h2:~/springsecurityexample # embedded mode # in-memory mode로 사용할 경우 jdbc:h2:mem:test
+    username: sa
+    password:
 #  InMemoryUserDetailsManager 등 UserDetailsManager 빈을 구성하면 yml 파일에 설정한 정보로는 인증 불가능
 #  security:
 #    user: # https://docs.spring.io/spring-boot/appendix/application-properties/index.html#appendix.application-properties.security
