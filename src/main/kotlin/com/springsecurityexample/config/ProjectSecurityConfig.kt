@@ -10,12 +10,9 @@ import org.springframework.security.config.Customizer
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity
 import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer
-import org.springframework.security.core.userdetails.UserDetailsService
 import org.springframework.security.crypto.password.NoOpPasswordEncoder
 import org.springframework.security.crypto.password.PasswordEncoder
-import org.springframework.security.provisioning.JdbcUserDetailsManager
 import org.springframework.security.web.SecurityFilterChain
-import javax.sql.DataSource
 
 @EnableWebSecurity
 @Configuration
@@ -58,10 +55,11 @@ class ProjectSecurityConfig {
     @Order(SecurityProperties.BASIC_AUTH_ORDER)
     fun defaultSecurityFilterChain(http: HttpSecurity): SecurityFilterChain {
         return http
+            .csrf { it.disable() } // CSRF 보안 해제 (cf. Spring Security는 기본으로 CSRF 보안 적용, POST 메서드 등으로 백엔드 내부 데이터를 수정하지 못하게 막음)
             .authorizeHttpRequests { requests ->
                 requests
                     .requestMatchers("/my-account", "my-balance", "/my-loans", "/my-cards").authenticated()
-                    .requestMatchers("/notices", "/contact").permitAll()
+                    .requestMatchers("/notices", "/contact", "/register").permitAll()
             }
             .formLogin(Customizer.withDefaults())
             .httpBasic(Customizer.withDefaults())
