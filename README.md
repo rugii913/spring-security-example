@@ -36,7 +36,12 @@
     - createUser(), updateUser(), deleteUser(), changePassword(), userExists() 등 정의
   - InMemoryUserDetailsManager, JdbcUserDetailsManager, LdapUserDetailsService 등 샘플 구현 클래스 있음
     - 위 UserDetailsService, UserDetailsManager 인터페이스의 역할들을 구현
-    - cf. JdbcUserDetailsManager를 사용할 경우 JdbcDaoImpl의 DEFAULT_USER_SCHEMA_DDL_LOCATION에서 확인할 수 있는 scheme을 따라야 함 
+    - cf. JdbcUserDetailsManager를 사용할 경우 특정 schema를 따라야 함
+      - spring-security-core-6.2.4.jar/org/springframework/security/core/userdetails/jdbc/users.ddl(JdbcDaoImpl의 DEFAULT_USER_SCHEMA_DDL_LOCATION에서 참조하는 경로) 파일 참고
+      - 혹은 https://docs.spring.io/spring-security/reference/servlet/authentication/passwords/jdbc.html 문서의 schema 참고
+      - MySQL처럼 위의 script와 호환이 안 되는 경우, 별도로 DDL 작성 후 실행해야 함
+        - id 컬럼을 추가하는 등 기본 schema와 충돌하지 않는 선에서 다른 schema를 구성할 수 있음
+        - 루트/src/main/resources/sql/scripts.sql 파일 참고
     - cf. LdapUserDetailsService는 별도 라이브러리 구성 및 storage로 LDAP 서버를 갖고 있어야 함
 
 - (3-4) UserDetails
