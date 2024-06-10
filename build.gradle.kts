@@ -28,6 +28,10 @@ dependencies {
     /* Spring Security */
     implementation("org.springframework.boot:spring-boot-starter-security")
 
+    /* ldap 관련 */
+    implementation("org.springframework.ldap:spring-ldap-core")
+    implementation("org.springframework.security:spring-security-ldap")
+
     /* test 관련 */
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation("org.springframework.security:spring-security-test") // Spring Security 관련 test 종속성
