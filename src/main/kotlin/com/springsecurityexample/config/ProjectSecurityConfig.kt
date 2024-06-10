@@ -99,7 +99,7 @@ class ProjectSecurityConfig {
         /*
         * InMemoryUserDetailsManager 사용 방법 2
         * - User.withUsername() 호출 시 return으로 받은 UserBuilder 객체 사용
-        * - cf. 동작 관련하여 다음 참고 https://velog.io/@fastdodge7/Spring-Security-PasswordEncoder를-빈으로-등록하는-이유는
+        * - cf. 동작 관련하여 다음 참고 - https://velog.io/@fastdodge7/Spring-Security-PasswordEncoder를-빈으로-등록하는-이유는
         *   - UserDetails를 등록할 때는 passwordEncoder property를 직접 등록해줬고
         *   - InitializeUserDetailsBeanManagerConfigurer의 configure() 메서드에서 볼 수 있듯
         *     - 빈으로 등록된 PasswordEncoder가 있다면 DaoAuthenticationProvider의 setPasswordEncoder()를 호출하여 
