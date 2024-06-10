@@ -5,6 +5,7 @@ plugins {
     id("io.spring.dependency-management") version "1.1.5"
     kotlin("jvm") version "1.9.24"
     kotlin("plugin.spring") version "1.9.24"
+    kotlin("plugin.jpa") version "1.9.24" // 추가하지 않으면 JPA entity 클래스에 no-arg 생성자 관련 경고 발생
 }
 
 group = "com"
@@ -36,6 +37,8 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-jdbc")
     /* H2 DB */
     implementation("com.h2database:h2")
+    /* Spring Data JPA */
+    implementation("org.springframework.boot:spring-boot-starter-data-jpa")
 
     /* test 관련 */
     testImplementation("org.springframework.boot:spring-boot-starter-test")
