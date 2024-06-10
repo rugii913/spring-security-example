@@ -131,9 +131,12 @@ class ProjectSecurityConfig {
     }
 */
 
+/*
+- JdbcUserDetailsManager 관련 주석 처리 - 이후 커스텀 UserDetailsService인 SercurityExampleUserDetailsService 사용
     /* UserDetailsService로 JdbcUserDetailsManager 객체를 빈으로 등록하여 사용 */
     @Bean
     fun userDetailsService(dataSource: DataSource): UserDetailsService = JdbcUserDetailsManager(dataSource)
+*/
 
     /*
     * - cf. NoOpPasswordEncoder 역시 deprecated 표시가 되어있지만, production에서 사용하기 부적합함을 경고하기 위해 표시한 것이고, 지원 중단 예정은 아님
