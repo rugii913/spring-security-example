@@ -10,12 +10,12 @@ import org.springframework.security.config.Customizer
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity
 import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer
-import org.springframework.security.core.userdetails.User
-import org.springframework.security.core.userdetails.UserDetails
+import org.springframework.security.core.userdetails.UserDetailsService
 import org.springframework.security.crypto.password.NoOpPasswordEncoder
 import org.springframework.security.crypto.password.PasswordEncoder
-import org.springframework.security.provisioning.InMemoryUserDetailsManager
+import org.springframework.security.provisioning.JdbcUserDetailsManager
 import org.springframework.security.web.SecurityFilterChain
+import javax.sql.DataSource
 
 @EnableWebSecurity
 @Configuration
@@ -68,6 +68,8 @@ class ProjectSecurityConfig {
             .build()
     }
 
+/*
+- InMemoryUserDetailsManager 관련 주석 처리
     /*
     * - org.springframework.boot.autoconfigure.security 패키지의 User가 아닌 org.springframework.security.core.userdetails 패키지의 User
     *   - org.springframework.security.core.userdetails.User는 UserDetails 인터페이스를 구현하는 클래스
@@ -127,6 +129,11 @@ class ProjectSecurityConfig {
 
         return InMemoryUserDetailsManager(admin1, user1)
     }
+*/
+
+    /* UserDetailsService로 JdbcUserDetailsManager 객체를 빈으로 등록하여 사용 */
+    @Bean
+    fun userDetailsService(dataSource: DataSource): UserDetailsService = JdbcUserDetailsManager(dataSource)
 
     /*
     * - cf. NoOpPasswordEncoder 역시 deprecated 표시가 되어있지만, production에서 사용하기 부적합함을 경고하기 위해 표시한 것이고, 지원 중단 예정은 아님
