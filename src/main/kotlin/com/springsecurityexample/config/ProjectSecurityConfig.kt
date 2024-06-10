@@ -1,11 +1,13 @@
 package com.springsecurityexample.config
 
 import org.springframework.boot.autoconfigure.security.SecurityProperties
+import org.springframework.boot.autoconfigure.security.servlet.PathRequest
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.core.annotation.Order
 import org.springframework.security.config.Customizer
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
+import org.springframework.security.config.annotation.web.configurers.HeadersConfigurer.FrameOptionsConfig
 import org.springframework.security.core.userdetails.User
 import org.springframework.security.core.userdetails.UserDetails
 import org.springframework.security.crypto.password.NoOpPasswordEncoder
@@ -53,10 +55,13 @@ class ProjectSecurityConfig {
     @Order(SecurityProperties.BASIC_AUTH_ORDER)
     fun defaultSecurityFilterChain(http: HttpSecurity): SecurityFilterChain {
         return http
+            .headers { it.frameOptions { frameOptionsConfig -> frameOptionsConfig.sameOrigin() } }
+            .csrf { it.ignoringRequestMatchers(PathRequest.toH2Console()) }
             .authorizeHttpRequests { requests ->
                 requests
                     .requestMatchers("/my-account", "my-balance", "/my-loans", "/my-cards").authenticated()
                     .requestMatchers("/notices", "/contact").permitAll()
+                    .requestMatchers(PathRequest.toH2Console()).permitAll()
             }
             .formLogin(Customizer.withDefaults())
             .httpBasic(Customizer.withDefaults())
