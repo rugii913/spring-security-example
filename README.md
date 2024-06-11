@@ -85,3 +85,23 @@
   - 인증 성공으로 판단될 경우
     - createSuccessAuthentication()에 Authentication 객체를 인자로 넘겨 호출하며
     - Authentication 객체를 적절하게 수정 후 return
+
+## password를 다루는 방법
+
+### Encoding vs. Encryption vs. Hashing
+- 각각을 구분할 것
+
+### PasswordEncoder 인터페이스의 기능
+- 세 가지 기능 → encode(), matches(), upgradeEncoding()
+
+### PasswordEncoder의 여러 구현 클래스들
+- cf. DelegatingPasswordEncoder 및 PasswordEncoderFactories에서 여러 구현 클래스들을 확인해볼 수 있음
+- NoOp, Standard, Pbkdf2, BCrypt, SCrypt, Argon2, ... 등 여러 구현 클래스
+  - NoOp은 운영 환경에서 사용 x, Standard는 레거시 시스템 지원용이므로 사용 x, Pbkdf2는 하드웨어 발전에 따라 brute force 공격에 대해 안전하지 않음
+  - BCrypt, Scrypt, Argon2 등은 각각의 특징에 따라 CPU, 메모리, 멀티 스레드 등 자원 사용을 강제하여 brute force 공격을 어렵게 하는 방법들
+    - 이들 모두 spring-security-crypto:x.x.x의 org.springframework.security.crypto 패키지에 있음
+
+### BCryptPasswordEncoder
+  - BCrypt 사용 후 결과값 중 첫 세 글자(ex. $2a)는 알고리즘 버전과 관련, 그 다음 세 글자(ex. $10)는 로그 라운드 수와 관련
+    - BCryptPasswordEncoder의 BCRYPT_PATTERN에서 확인 가능
+  - BCryptPasswordEncoder 객체 생성 시, 알고리즘 버전 및 로그 라운드 등을 생성자를 이용해 설정 가능 
