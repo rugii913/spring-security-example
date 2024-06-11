@@ -10,6 +10,7 @@ import org.springframework.security.config.Customizer
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity
 import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
 import org.springframework.security.crypto.password.NoOpPasswordEncoder
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.security.web.SecurityFilterChain
@@ -135,13 +136,19 @@ class ProjectSecurityConfig {
     @Bean
     fun userDetailsService(dataSource: DataSource): UserDetailsService = JdbcUserDetailsManager(dataSource)
 */
-
+    
+/*
+- NoOpPasswordEncoder 빈 등록 주석 처리
     /*
     * - cf. NoOpPasswordEncoder 역시 deprecated 표시가 되어있지만, production에서 사용하기 부적합함을 경고하기 위해 표시한 것이고, 지원 중단 예정은 아님
     *   - 단지 CharSequence type rawPassword에 대해 toString()을 호출하여 단지 plain text로 다루도록 함
     * */
     @Bean
-    fun passwordEncoder(): PasswordEncoder = NoOpPasswordEncoder.getInstance()
+    fun passwordEncoder(): PasswordEncoder = NoOpPasswordEncoder.getInstance()    
+*/
+
+    @Bean
+    fun passwordEncoder(): PasswordEncoder = BCryptPasswordEncoder()
 
     /*
     * - 참고 https://dukcode.github.io/spring/h2-console-with-spring-security/
