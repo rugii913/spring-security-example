@@ -104,4 +104,61 @@
 ### BCryptPasswordEncoder
   - BCrypt 사용 후 결과값 중 첫 세 글자(ex. $2a)는 알고리즘 버전과 관련, 그 다음 세 글자(ex. $10)는 로그 라운드 수와 관련
     - BCryptPasswordEncoder의 BCRYPT_PATTERN에서 확인 가능
-  - BCryptPasswordEncoder 객체 생성 시, 알고리즘 버전 및 로그 라운드 등을 생성자를 이용해 설정 가능 
+  - BCryptPasswordEncoder 객체 생성 시, 알고리즘 버전 및 로그 라운드 등을 생성자를 이용해 설정 가능
+
+## AuthenticationProvider 인터페이스와 커스텀 AuthenticationProvider
+
+### 커스텀 AuthenticationProvider의 필요성
+- 샘플로 존재하는 AuthenticationProvider로는 만족시킬 수 없는 특정한 요구사항이 있는 경우
+  - ex. 특정 나이 이상의 사용자만 접근을 허용하는 로직
+  - ex. 허용 국가 목록에 포함된 국가의 사용자만 접근을 허용하는 로직
+  - UserDetailsManager는 UserDetails에 대한 CRUD 기능을 담당하므로
+    - 단지 커스텀한 UserDetailsManager를 작성하는 것만으로는 충분하지 않고,
+    - 커스텀 AuthenticationProvider에서 커스텀한 인증 로직을 작성해야 함
+- 요구사항에 따라 여러 인증 방식을 사용하는 경우
+  - ex. username과 password를 사용하는 인증 방식, OAuth2를 사용하는 인증 방식, OTP를 사용하는 인증 방식을 함께 사용
+    - 각 인증 방식에 대해 적절한 Authentication 객체를 생성하여 사용하도록 하고,
+    - 각 인증 방식에 대해 커스텀 AuthenticationProvider를 작성,
+    - ProviderManager가 Authentication 객체에 적합한 AuthenticationProvider를 사용할 수 있도록 설정해줘야 함
+
+### cf. Authentication 인터페이스
+- Authentication extends Principal, Serializable
+  - Principal interface는 java.security 패키지에 있으며, java.base라는 기본적인 라이브러리에 속함
+  - Principal이 의존하고 있는 Subject class 역시 java.base 라이브러리에 속하며 javax.security.auth 패키지에 위치함
+
+### AuthenticationProvider 인터페이스의 기능
+- 두 가지 기능 → authenticate(), supports()
+  - authenticate()로 인증이 실패한 경우 ProviderManager는 다른 AuthenticationProvider 구현체로 인증을 시도함
+- cf. 테스트 환경에서는 TestingAuthenticationProvider와 TestingAuthenticationToken을 사용하는 것을 고려
+  - 테스트에서 불필요하게 보완 관련 설정까지 신경써야할 필요성을 줄여줌
+
+### AuthenticationProvider type 객체를 호출하는 곳 - ProviderManager(AuthenticationManager의 subtype)
+- ProviderManager의 authenticate() 메서드에서 각 AuthenticationProvider에 대해 supports()를 호출하고
+  - return으로 true가 돌아오면 AuthenticationProvider의 authenticate()를 호출 
+- ProviderManager의 providers property는 언제 초기화 되는가?
+  - HttpSecurity configuration 과정에서 AuthenticationManagerBuilder의 List인 providers에 add 된 후
+  - AuthenticationManagerBuilder를 이용해 ProviderManager가 생성되는 것으로 보임
+  - ProviderManager의 생성자 및 AuthenticationManagerBuilder의 authenticationProvider()에 중단점 걸고 확인 필요
+- ProviderManager의 authenticate()에서 인증이 성공한 뒤
+  - CredentialsContainer type 객체의 eraseCredentials()을 통해 credential을 제거함
+  - 또한 AuthenticationEventPublisher 객체의 publishAuthenticationSuccess()를 호출하는 로직이 있어, 이벤트로 인해 특정 작업이 시작되도록 할 수 있음
+
+### cf. 커스텀 AuthenticationProvider 빈의 등록 과정
+- AuthenticationManagerBuilder의 authenticationProvider() 메서드에 중단점 걸고 따라가보면
+  - AuthenticationConfiguration의 getAuthenticationManager() 호출 시
+  - authBuilder.build()를 통해 AuthenticationManager를 빌더 패턴으로 만든 뒤 property로 갖고 있음
+  - 이렇게 AuthenticationManager를 빌더 패턴으로 만드는 과정에서 configure() 과정이 있음
+  - 이 configure 과정에서 AuthenticationProvider type 빈을 모두 가져온 뒤
+    - 빌더 객체 안의 authenticationProviders property에 AuthenticationProvider 빈 객체를 추가해주는 과정이 있음
+    - 따라서 AuthenticationProvider type 객체가 빈으로 등록되면
+    - 알아서 AuthenticationManager(구현 클래스는 ProviderManager type)의 providers property에 추가됨 
+- 그렇다면 DaoAuthenticationProvider는 왜 명시적인 @Bean, @Component가 필요 없는가?
+  - AuthenticationConfiguration의 getAuthenticationManager()에서 authBuilder.build()할 때 흐름이 달라짐
+  - 커스텀 AuthenticationProvider가 빈으로 등록되지 않은 경우 
+    - InitializeUserDetailsBeanManagerConfigurer의 내부 클래스 InitializeUserDetailsManagerConfigurer type 객체가 작동
+    - configure() 메서드에서 DaoAuthenticationProvider 객체를 직접 생성하고 AuthenticationManagerBuilder의 authenticationProviders property에 추가함
+- 똑같이 supports()에서 UsernamePasswordAuthenticationToken을 지원할 경우, DaoAuthenticationProvider와의 순서 문제?
+  - 커스텀 AuthenticationProvider를 등록할 경우
+  - DaoAuthenticationProvider가 ProviderManager의 providers property의 요소로 등록되지 않아 순서 문제도 발생하지 않음
+- cf. 실제 런타임에 인증에 사용되는 객체는 정확하게 해당 type의 객체는 아님
+  - 빈으로 등록한 객체는 parent로 활용, Security 구성 과정에서 프록시 객체를 한 번 더 생성하고, 실제 인증에는 프록시 객체를 사용   
