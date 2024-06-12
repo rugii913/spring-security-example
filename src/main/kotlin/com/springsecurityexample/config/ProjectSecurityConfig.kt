@@ -150,6 +150,8 @@ class ProjectSecurityConfig {
     @Bean
     fun passwordEncoder(): PasswordEncoder = BCryptPasswordEncoder()
 
+/*
+- MySQL로 변경하며 주석 처리
     /*
     * - 참고 https://dukcode.github.io/spring/h2-console-with-spring-security/
     *   - h2 console에 대한 요청이 Spring Security 필터를 통과하지 않도록 함
@@ -159,4 +161,5 @@ class ProjectSecurityConfig {
     @ConditionalOnProperty(name = ["spring.h2.console.enabled"], havingValue = "true")
     fun configureH2ConsoleEnable() =
         WebSecurityCustomizer { web -> web.ignoring().requestMatchers(PathRequest.toH2Console()) }
+*/
 }

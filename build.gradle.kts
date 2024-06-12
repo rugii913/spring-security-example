@@ -35,8 +35,8 @@ dependencies {
 
     /* JDBC */
     implementation("org.springframework.boot:spring-boot-starter-jdbc")
-    /* H2 DB */
-    implementation("com.h2database:h2")
+    /* MySQL DBMS */
+    runtimeOnly("com.mysql:mysql-connector-j")
     /* Spring Data JPA */
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
 
