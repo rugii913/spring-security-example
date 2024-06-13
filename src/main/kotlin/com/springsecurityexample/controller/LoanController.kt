@@ -1,13 +1,18 @@
 package com.springsecurityexample.controller
 
+import com.springsecurityexample.model.Loan
+import com.springsecurityexample.repository.LoanRepository
 import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 
 @RestController
-class LoanController {
+class LoanController(
+    private val loanRepository: LoanRepository,
+) {
 
     @GetMapping("/my-loans")
-    fun getLoanDetails(): String {
-        return "Here are the loan details from the DB"
+    fun getLoanDetails(@RequestParam customerId: Int): List<Loan> {
+        return loanRepository.findByCustomerIdOrderByStartDateDesc(customerId)
     }
 }

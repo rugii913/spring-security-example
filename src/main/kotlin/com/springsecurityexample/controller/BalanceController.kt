@@ -1,13 +1,18 @@
 package com.springsecurityexample.controller
 
+import com.springsecurityexample.model.AccountTransaction
+import com.springsecurityexample.repository.AccountTransactionRepository
 import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 
 @RestController
-class BalanceController {
+class BalanceController(
+    private val accountTransactionRepository: AccountTransactionRepository,
+) {
 
     @GetMapping("/my-balance")
-    fun getBalanceDetails(): String {
-        return "Here are the balance details from the DB"
+    fun getBalanceDetails(@RequestParam customerId: Int): List<AccountTransaction> {
+        return accountTransactionRepository.findByCustomerIdOrderByTransactionDateDesc(customerId)
     }
 }

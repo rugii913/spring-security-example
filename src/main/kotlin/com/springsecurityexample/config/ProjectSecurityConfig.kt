@@ -59,7 +59,7 @@ class ProjectSecurityConfig {
             .csrf { it.disable() } // CSRF 보안 해제 (cf. Spring Security는 기본으로 CSRF 보안 적용, POST 메서드 등으로 백엔드 내부 데이터를 수정하지 못하게 막음)
             .authorizeHttpRequests { requests ->
                 requests
-                    .requestMatchers("/my-account", "my-balance", "/my-loans", "/my-cards").authenticated()
+                    .requestMatchers("/my-account", "my-balance", "/my-loans", "/my-cards", "/user").authenticated()
                     .requestMatchers("/notices", "/contact", "/register").permitAll()
             }
             .formLogin(Customizer.withDefaults())

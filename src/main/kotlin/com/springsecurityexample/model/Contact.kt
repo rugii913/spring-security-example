@@ -12,9 +12,9 @@ class Contact(
     val contactEmail: String,
     val subject: String,
     val message: String,
-    val createDate: LocalDate,
+    var createDate: LocalDate, // TODO 나중에 DTO 만들게 되면 val로 수정할 것
 ) {
 
     @Id
-    val contactId: String? = null
+    var contactId: String? = null
 }

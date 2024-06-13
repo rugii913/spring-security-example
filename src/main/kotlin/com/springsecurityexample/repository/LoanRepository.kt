@@ -7,5 +7,5 @@ import org.springframework.stereotype.Repository
 @Repository
 interface LoanRepository : CrudRepository<Loan, Long> {
 
-    fun findByCustomerIdOrderByStartDateDesc(customerId: Int)
+    fun findByCustomerIdOrderByStartDateDesc(customerId: Int): List<Loan>
 }

@@ -1,13 +1,18 @@
 package com.springsecurityexample.controller
 
+import com.springsecurityexample.model.Card
+import com.springsecurityexample.repository.CardRepository
 import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 
 @RestController
-class CardController {
+class CardController(
+    private val cardRepository: CardRepository,
+) {
 
     @GetMapping("/my-cards")
-    fun getCardDetails(): String {
-        return "Here are the card details from the DB"
+    fun getCardDetails(@RequestParam customerId: Int): List<Card> {
+        return cardRepository.findByCustomerId(customerId)
     }
 }

@@ -5,14 +5,16 @@ import com.springsecurityexample.model.Customer
 import com.springsecurityexample.repository.CustomerRepository
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
+import org.springframework.security.core.Authentication
 import org.springframework.security.crypto.password.PasswordEncoder
+import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RestController
 import java.time.LocalDate
 
 @RestController
-class CustomerRegistrationController(
+class CustomerController(
     private val customerRepository: CustomerRepository,
     private val passwordEncoder: PasswordEncoder, // 사용자 등록을 위한 코드를 Spring Security의 제어를 받지 않도록 별도로 작성했으므로, PasswordEncoder도 명시적으로 사용해줘야 함
 ) {
@@ -26,7 +28,14 @@ class CustomerRegistrationController(
     fun registerUser(@RequestBody registrationRequest: CustomerRegistrationRequest): ResponseEntity<String> {
         try {
             val encodedPassword = passwordEncoder.encode(registrationRequest.password)
-            val customer = Customer(registrationRequest.email, "", "", encodedPassword, registrationRequest.role, LocalDate.now())
+            val customer = Customer(
+                registrationRequest.name,
+                registrationRequest.email,
+                registrationRequest.mobileNumber,
+                encodedPassword,
+                registrationRequest.role,
+                LocalDate.now()
+            )
             customerRepository.save(customer)
 
         } catch (exception: Exception) {
@@ -38,5 +47,10 @@ class CustomerRegistrationController(
         return ResponseEntity
             .status(HttpStatus.CREATED)
             .body("Given user details are successfully registered")
+    }
+
+    @GetMapping("/user")
+    fun getUserDetailsAfterLogin(authentication: Authentication): Customer {
+        return customerRepository.findByEmail(authentication.name)[0]
     }
 }
