@@ -162,3 +162,40 @@
   - DaoAuthenticationProvider가 ProviderManager의 providers property의 요소로 등록되지 않아 순서 문제도 발생하지 않음
 - cf. 실제 런타임에 인증에 사용되는 객체는 정확하게 해당 type의 객체는 아님
   - 빈으로 등록한 객체는 parent로 활용, Security 구성 과정에서 프록시 객체를 한 번 더 생성하고, 실제 인증에는 프록시 객체를 사용   
+
+## CORS와 CSRF
+
+### CORS(Cross-Origin Resource Sharing, 교차 출처 리소스 공유)
+- CORS란?
+  - 서로 다른 두 origin이 resource를 공유하는 상황을 처리하는 메커니즘
+    - origin은 (프로토콜 + 도메인 + 포트)로 판단됨
+    - resource는 HTTP 명세에서 말하는 서로 구분하여 식별할 수 있는 것들로 생각하면 될 것
+  - CORS가 보안 공격의 일종인 게 아니라 리소스 공유에 대한 규칙
+    - 현대 브라우저에서 기본으로 제공하는 기능으로 다른 origin에 대한 데이터 공유, 통신을 가능하게 하는 것
+    - 규칙을 설정하지 않으면 기본적으로 다른 origin과의 데이터 공유, 통신은 불가능하도록 브라우저가 작동
+  - 참고
+    - [MDN 문서 - Cross-Origin Resource Sharing(CORS)](https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS)
+    - [W3C Recommendation - Cross-Origin Resource Sharing](https://www.w3.org/TR/2020/SPSD-cors-20200602/)
+    - [W3C Wiki 문서 - CORS](https://www.w3.org/wiki/CORS)
+- CORS 규칙을 설정하지 않으면 왜 기본적으로 통신을 막는가?
+  - CORS는 W3C 표준으로 정해져있음
+    - 현대 브라우저들이 이 표준을 따르고 있음
+    - 해당 표준의 목적은 통신을 막는 것이 아니라 오히려 same origin restriction을 제거하기 위한 것
+  - 보안 위협 및 기존에 널리 퍼진 same origin restriction을 고려하여
+    - 기본 설정으로는 cross-origin 간 resource 공유를 막되
+    - 표준을 따르는 일정한 규칙에 의거하여 안전하고 편리하게 cross-origin 간 resource를 공유하자는 것
+- Spring 프레임워크에서 CORS를 설정하는 방법
+  - (1) org.springframework.web.bind.annotation.CrossOrigin 어노테이션 이용(→ Spring Security 필요 없음)
+    - origins property에 값을 지정하여 특정 origin 혹은 모든 origin에 대해서 resource 공유를 허가할 수 있음
+      - class 혹은 method에 붙일 수 있는 어노테이션
+    - 하지만 컨트롤러 역할을 하는 클래스에 @CrossOrigin을 붙이고, origin을 설정하는 것은 피곤한 작업 
+  - (2) Spring Security를 이용하여 전역으로 CORS 설정
+    - SecurityFilterChain 빈 등록 시 http.cors() 메서드를 이용해 허용되는 origin, method, header 등을 설정
+- cf. CORS 가능한 요청에 해당하지 않아 요청이 막히는 경우 서버 쪽에서는 DB로 쿼리하지도 않음
+  - 브라우저는 cross-origin 요청으로 판단되는 경우 OPTIONS 메서드로 preflight 요청을 보내고
+  - preflight에 대한 응답 HTTP 메시지의 header로 cross-origin 요청 처리가 가능한 origin인지 아닌지 판단,
+  - 요청 처리가 불가능한 origin인 경우 주된 요청을 보내지 않는 것
+    - 따라서 서버 쪽의 비즈니스 로직 코드가 실행되지도 않고, DB에 쿼리하는 코드도 당연히 실행되지 않음
+  - 반대로 말하면 preflight 요청에서 적절한 Access-Control-Allow-Origin 헤더 등을 발견할 수 있다면
+    - 즉 백엔드 서버에서 적절히 헤더를 설정해줬다면 
+    - 브라우저가 preflight 요청 후 주된 요청을 보내는 데에 문제가 없음 
