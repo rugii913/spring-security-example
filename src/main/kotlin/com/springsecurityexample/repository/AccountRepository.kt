@@ -1,11 +1,11 @@
 package com.springsecurityexample.repository
 
-import com.springsecurityexample.model.Customer
+import com.springsecurityexample.model.Account
 import org.springframework.data.repository.CrudRepository
 import org.springframework.stereotype.Repository
 
 @Repository
-interface CustomerRepository : CrudRepository<Customer, Int> {
+interface AccountRepository : CrudRepository<Account, Long> {
 
-    fun findByEmail(email: String): List<Customer>
+    fun findByCustomerId(customerId: Int): Account
 }
