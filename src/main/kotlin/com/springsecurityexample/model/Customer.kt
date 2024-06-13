@@ -1,15 +1,20 @@
 package com.springsecurityexample.model
 
+import com.fasterxml.jackson.annotation.JsonProperty
 import jakarta.persistence.Entity
 import jakarta.persistence.GeneratedValue
 import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
+import java.time.LocalDate
 
 @Entity
 class Customer(
+    val name: String,
     val email: String,
-    val password: String,
+    val mobileNumber: String,
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY) val password: String,
     val role: String,
+    val createDate: LocalDate,
 ) {
 
     @Id
@@ -18,5 +23,5 @@ class Customer(
     // - @GenericGenerator에 대한 자세한 설명은 다음 참고 - https://0soo.tistory.com/178
 //    @GeneratedValue(strategy = GenerationType.AUTO, generator = "native")
 //    @GenericGenerator(name = "native", strategy = "native")
-    var id: Long? = null
+    var customerId: Int? = null
 }

@@ -36,9 +36,9 @@ CREATE TABLE `customer`
     `name`          varchar(100) NOT NULL,
     `email`         varchar(100) NOT NULL,
     `mobile_number` varchar(20)  NOT NULL,
-    `password`           varchar(500) NOT NULL,
+    `password`      varchar(500) NOT NULL,
     `role`          varchar(100) NOT NULL,
-    `create_date`     date DEFAULT NULL,
+    `create_date`   date         DEFAULT NULL,
     PRIMARY KEY (`customer_id`)
 );
 
@@ -51,10 +51,10 @@ VALUES ('Happy', 'happy@example.com', '9876548337', '$2y$12$oRRbkNfwuR8ug4MlzH5F
 CREATE TABLE `account`
 (
     `customer_id`    int          NOT NULL,
-    `account_number` int          NOT NULL,
+    `account_number` bigint       NOT NULL,
     `account_type`   varchar(100) NOT NULL,
     `branch_address` varchar(200) NOT NULL,
-    `create_date`      date DEFAULT NULL,
+    `create_date`    date         DEFAULT NULL,
     PRIMARY KEY (`account_number`),
     KEY `customer_id` (`customer_id`),
     CONSTRAINT `customer_ibfk_1` FOREIGN KEY (`customer_id`) REFERENCES `customer` (`customer_id`) ON DELETE CASCADE
@@ -68,14 +68,14 @@ VALUES (1, 1865764534, 'Savings', '123 Main Street, New York', CURDATE());
 CREATE TABLE `account_transaction`
 (
     `transaction_id`      varchar(200) NOT NULL,
-    `account_number`      int          NOT NULL,
+    `account_number`      bigint       NOT NULL,
     `customer_id`         int          NOT NULL,
-    `transaction_date`      date         NOT NULL,
+    `transaction_date`    date         NOT NULL,
     `transaction_summary` varchar(200) NOT NULL,
     `transaction_type`    varchar(100) NOT NULL,
-    `transaction_amt`     int          NOT NULL,
+    `transaction_amount`  int          NOT NULL,
     `closing_balance`     int          NOT NULL,
-    `create_date`           date DEFAULT NULL,
+    `create_date`         date         DEFAULT NULL,
     PRIMARY KEY (`transaction_id`),
     KEY `customer_id` (`customer_id`),
     KEY `account_number` (`account_number`),
@@ -84,37 +84,37 @@ CREATE TABLE `account_transaction`
 );
 
 INSERT INTO `account_transaction` (`transaction_id`, `account_number`, `customer_id`, `transaction_date`,
-                                    `transaction_summary`, `transaction_type`, `transaction_amt`,
+                                    `transaction_summary`, `transaction_type`, `transaction_amount`,
                                     `closing_balance`, `create_date`)
 VALUES (UUID(), 1865764534, 1, DATE_SUB(CURDATE(), INTERVAL 7 DAY), 'Coffee Shop', 'Withdrawal', 30, 34500,
         DATE_SUB(CURDATE(), INTERVAL 7 DAY));
 
 INSERT INTO `account_transaction` (`transaction_id`, `account_number`, `customer_id`, `transaction_date`,
-                                    `transaction_summary`, `transaction_type`, `transaction_amt`,
+                                    `transaction_summary`, `transaction_type`, `transaction_amount`,
                                     `closing_balance`, `create_date`)
 VALUES (UUID(), 1865764534, 1, DATE_SUB(CURDATE(), INTERVAL 6 DAY), 'Uber', 'Withdrawal', 100, 34400,
         DATE_SUB(CURDATE(), INTERVAL 6 DAY));
 
 INSERT INTO `account_transaction` (`transaction_id`, `account_number`, `customer_id`, `transaction_date`,
-                                    `transaction_summary`, `transaction_type`, `transaction_amt`,
+                                    `transaction_summary`, `transaction_type`, `transaction_amount`,
                                     `closing_balance`, `create_date`)
 VALUES (UUID(), 1865764534, 1, DATE_SUB(CURDATE(), INTERVAL 5 DAY), 'Self Deposit', 'Deposit', 500, 34900,
         DATE_SUB(CURDATE(), INTERVAL 5 DAY));
 
 INSERT INTO `account_transaction` (`transaction_id`, `account_number`, `customer_id`, `transaction_date`,
-                                    `transaction_summary`, `transaction_type`, `transaction_amt`,
+                                    `transaction_summary`, `transaction_type`, `transaction_amount`,
                                     `closing_balance`, `create_date`)
 VALUES (UUID(), 1865764534, 1, DATE_SUB(CURDATE(), INTERVAL 4 DAY), 'Ebay', 'Withdrawal', 600, 34300,
         DATE_SUB(CURDATE(), INTERVAL 4 DAY));
 
 INSERT INTO `account_transaction` (`transaction_id`, `account_number`, `customer_id`, `transaction_date`,
-                                    `transaction_summary`, `transaction_type`, `transaction_amt`,
+                                    `transaction_summary`, `transaction_type`, `transaction_amount`,
                                     `closing_balance`, `create_date`)
 VALUES (UUID(), 1865764534, 1, DATE_SUB(CURDATE(), INTERVAL 2 DAY), 'OnlineTransfer', 'Deposit', 700, 35000,
         DATE_SUB(CURDATE(), INTERVAL 2 DAY));
 
 INSERT INTO `account_transaction` (`transaction_id`, `account_number`, `customer_id`, `transaction_date`,
-                                    `transaction_summary`, `transaction_type`, `transaction_amt`,
+                                    `transaction_summary`, `transaction_type`, `transaction_amount`,
                                     `closing_balance`, `create_date`)
 VALUES (UUID(), 1865764534, 1, DATE_SUB(CURDATE(), INTERVAL 1 DAY), 'Amazon.com', 'Withdrawal', 100, 34900,
         DATE_SUB(CURDATE(), INTERVAL 1 DAY));
@@ -123,14 +123,14 @@ VALUES (UUID(), 1865764534, 1, DATE_SUB(CURDATE(), INTERVAL 1 DAY), 'Amazon.com'
 
 CREATE TABLE `loan`
 (
-    `loan_number`        int          NOT NULL AUTO_INCREMENT,
+    `loan_number`        bigint       NOT NULL AUTO_INCREMENT,
     `customer_id`        int          NOT NULL,
-    `start_date`           date         NOT NULL,
+    `start_date`         date         NOT NULL,
     `loan_type`          varchar(100) NOT NULL,
     `total_loan`         int          NOT NULL,
     `amount_paid`        int          NOT NULL,
     `outstanding_amount` int          NOT NULL,
-    `create_date`          date DEFAULT NULL,
+    `create_date`        date         DEFAULT NULL,
     PRIMARY KEY (`loan_number`),
     KEY `customer_id` (`customer_id`),
     CONSTRAINT `loan_customer_ibfk_1` FOREIGN KEY (`customer_id`) REFERENCES `customer` (`customer_id`) ON DELETE CASCADE
@@ -163,7 +163,7 @@ CREATE TABLE `card`
     `total_limit`      int          NOT NULL,
     `amount_used`      int          NOT NULL,
     `available_amount` int          NOT NULL,
-    `create_date`        date DEFAULT NULL,
+    `create_date`      date         DEFAULT NULL,
     PRIMARY KEY (`card_id`),
     KEY `customer_id` (`customer_id`),
     CONSTRAINT `card_customer_ibfk_1` FOREIGN KEY (`customer_id`) REFERENCES `customer` (`customer_id`) ON DELETE CASCADE
@@ -185,13 +185,13 @@ VALUES ('2359XXXX9346', 1, 'Credit', 20000, 4000, 16000, CURDATE());
 
 CREATE TABLE `notice_detail`
 (
-    `notice_id`      int          NOT NULL AUTO_INCREMENT,
-    `notice_summary` varchar(200) NOT NULL,
-    `notice_detail` varchar(500) NOT NULL,
-    `notice_begin_date`   date         NOT NULL,
-    `notice_end_date`   date DEFAULT NULL,
-    `create_date`      date DEFAULT NULL,
-    `update_date`      date DEFAULT NULL,
+    `notice_id`         int          NOT NULL AUTO_INCREMENT,
+    `notice_summary`    varchar(200) NOT NULL,
+    `notice_detail`     varchar(500) NOT NULL,
+    `notice_begin_date` date         NOT NULL,
+    `notice_end_date`   date         DEFAULT NULL,
+    `create_date`       date         DEFAULT NULL,
+    `update_date`       date         DEFAULT NULL,
     PRIMARY KEY (`notice_id`)
 );
 
@@ -240,6 +240,6 @@ CREATE TABLE `contact_message`
     `contact_email` varchar(100)  NOT NULL,
     `subject`       varchar(500)  NOT NULL,
     `message`       varchar(2000) NOT NULL,
-    `create_date`     date DEFAULT NULL,
+    `create_date`   date          DEFAULT NULL,
     PRIMARY KEY (`contact_id`)
 );
