@@ -9,6 +9,7 @@ import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RestController
+import java.time.LocalDate
 
 @RestController
 class CustomerRegistrationController(
@@ -25,7 +26,7 @@ class CustomerRegistrationController(
     fun registerUser(@RequestBody registrationRequest: CustomerRegistrationRequest): ResponseEntity<String> {
         try {
             val encodedPassword = passwordEncoder.encode(registrationRequest.password)
-            val customer = Customer(registrationRequest.email, encodedPassword, registrationRequest.role)
+            val customer = Customer(registrationRequest.email, "", "", encodedPassword, registrationRequest.role, LocalDate.now())
             customerRepository.save(customer)
 
         } catch (exception: Exception) {
