@@ -54,11 +54,11 @@ class ProjectSecurityConfig {
     fun defaultSecurityFilterChain(http: HttpSecurity): SecurityFilterChain {
         return http
             .cors { it.configurationSource { getCorsConfiguration() } }
-            .csrf { it.ignoringRequestMatchers("/contact", "/register") }
+            .csrf { it.ignoringRequestMatchers("/register") }
             .authorizeHttpRequests { requests ->
                 requests
-                    .requestMatchers("/my-account", "my-balance", "/my-loans", "/my-cards", "/user").authenticated()
-                    .requestMatchers("/notices", "/contact", "/register").permitAll()
+                    .requestMatchers("/my-account", "my-balance", "/my-loans", "/my-cards", "/contact", "/user").authenticated()
+                    .requestMatchers("/notices", "/register").permitAll()
             }
             .formLogin(Customizer.withDefaults())
             .httpBasic(Customizer.withDefaults())
