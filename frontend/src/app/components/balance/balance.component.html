@@ -30,10 +30,10 @@
       </thead>
       <tbody>
         <tr *ngFor="let transaction of transactions">
-          <th>{{transaction.transactionDt}}</th>
+          <th>{{transaction.transactionDate}}</th>
           <td>{{transaction.transactionSummary}}</td>
-          <td>{{transaction.transactionType=='Withdrawal' ? (transaction.transactionAmt | currency) : ' '}}</td>
-          <td>{{transaction.transactionType=='Deposit' ? (transaction.transactionAmt | currency) : ' '}}</td>
+          <td>{{transaction.transactionType=='Withdrawal' ? (transaction.transactionAmount | currency) : ' '}}</td>
+          <td>{{transaction.transactionType=='Deposit' ? (transaction.transactionAmount | currency) : ' '}}</td>
           <td>{{transaction.closingBalance | currency}}</td>
         </tr>
       </tbody>

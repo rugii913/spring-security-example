@@ -11,24 +11,21 @@ import { DashboardService } from '../../services/dashboard/dashboard.service';
 export class LoansComponent implements OnInit {
 
   user = new User();
-  loans = new Array();
+  loans = new Array<Loans>();
   currOutstandingBalance: number = 0;
 
   constructor(private dashboardService: DashboardService) { }
 
   ngOnInit(): void {
     this.user = JSON.parse(sessionStorage.getItem('userdetails') || "");
-    if(this.user){
+    if (this.user) {
       this.dashboardService.getLoansDetails(this.user.id).subscribe(
         responseData => {
-        this.loans = <any> responseData.body;
-        this.loans.forEach(function (this: LoansComponent, loan: Loans) {
-          this.currOutstandingBalance = this.currOutstandingBalance+loan.outstandingAmount;
-        }.bind(this)); 
+          this.loans = <any>responseData.body;
+          this.loans.forEach(function (this: LoansComponent, loan: Loans) {
+            this.currOutstandingBalance = this.currOutstandingBalance + loan.outstandingAmount;
+          }.bind(this));
         });
     }
   }
-
-  
-
 }
