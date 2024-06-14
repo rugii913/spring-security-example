@@ -12,7 +12,7 @@ class AccountController(
 ) {
 
     @GetMapping("/my-account")
-    fun getAccountDetails(@RequestParam customerId: Int): Account? {
+    fun getAccountDetails(@RequestParam(name = "id") customerId: Int): Account? {
         return accountRepository.findByCustomerId(customerId)
     }
 }

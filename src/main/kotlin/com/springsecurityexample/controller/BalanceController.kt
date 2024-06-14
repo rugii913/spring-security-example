@@ -12,7 +12,7 @@ class BalanceController(
 ) {
 
     @GetMapping("/my-balance")
-    fun getBalanceDetails(@RequestParam customerId: Int): List<AccountTransaction> {
+    fun getBalanceDetails(@RequestParam(name = "id") customerId: Int): List<AccountTransaction> {
         return accountTransactionRepository.findByCustomerIdOrderByTransactionDateDesc(customerId)
     }
 }

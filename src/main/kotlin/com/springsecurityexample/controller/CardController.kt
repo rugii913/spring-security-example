@@ -12,7 +12,7 @@ class CardController(
 ) {
 
     @GetMapping("/my-cards")
-    fun getCardDetails(@RequestParam customerId: Int): List<Card> {
+    fun getCardDetails(@RequestParam(name = "id") customerId: Int): List<Card> {
         return cardRepository.findByCustomerId(customerId)
     }
 }

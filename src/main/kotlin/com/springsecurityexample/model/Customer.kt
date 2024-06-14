@@ -12,7 +12,7 @@ class Customer(
     val name: String,
     val email: String,
     val mobileNumber: String,
-    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY) val password: String,
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY) val password: String, // TODO access가 무슨 역할인지 알아보기
     val role: String,
     val createDate: LocalDate,
 ) {
@@ -23,5 +23,6 @@ class Customer(
     // - @GenericGenerator에 대한 자세한 설명은 다음 참고 - https://0soo.tistory.com/178
 //    @GeneratedValue(strategy = GenerationType.AUTO, generator = "native")
 //    @GenericGenerator(name = "native", strategy = "native")
+    @JsonProperty(value = "id") // client 쪽으로 JSON property 이름을 맞춰줬음
     var customerId: Int? = null
 }

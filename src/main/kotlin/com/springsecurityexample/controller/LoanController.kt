@@ -12,7 +12,7 @@ class LoanController(
 ) {
 
     @GetMapping("/my-loans")
-    fun getLoanDetails(@RequestParam customerId: Int): List<Loan> {
+    fun getLoanDetails(@RequestParam(name = "id") customerId: Int): List<Loan> {
         return loanRepository.findByCustomerIdOrderByStartDateDesc(customerId)
     }
 }
