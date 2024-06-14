@@ -12,7 +12,7 @@ class Contact(
     val contactEmail: String,
     val subject: String,
     val message: String,
-    var createDate: LocalDate, // TODO 나중에 DTO 만들게 되면 val로 수정할 것
+    var createDate: LocalDate? = null, // TODO 나중에 DTO 만들게 되면 val로 수정할 것
 ) {
 
     @Id

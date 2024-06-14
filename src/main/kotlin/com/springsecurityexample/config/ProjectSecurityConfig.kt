@@ -54,7 +54,7 @@ class ProjectSecurityConfig {
     fun defaultSecurityFilterChain(http: HttpSecurity): SecurityFilterChain {
         return http
             .cors { it.configurationSource { getCorsConfiguration() } }
-            .csrf { it.disable() } // CSRF 보안 해제 (cf. Spring Security는 기본으로 CSRF 보안 적용, POST 메서드 등으로 백엔드 내부 데이터를 수정하지 못하게 막음)
+            .csrf { it.ignoringRequestMatchers("/contact", "/register") }
             .authorizeHttpRequests { requests ->
                 requests
                     .requestMatchers("/my-account", "my-balance", "/my-loans", "/my-cards", "/user").authenticated()
