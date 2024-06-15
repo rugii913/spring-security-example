@@ -8,6 +8,8 @@ import org.springframework.core.annotation.Order
 import org.springframework.security.config.Customizer
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity
+import org.springframework.security.config.annotation.web.configurers.CorsConfigurer
+import org.springframework.security.config.annotation.web.configurers.CsrfConfigurer
 import org.springframework.security.config.http.SessionCreationPolicy
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
 import org.springframework.security.crypto.password.PasswordEncoder
@@ -57,26 +59,11 @@ class ProjectSecurityConfig {
     @Bean
     @Order(SecurityProperties.BASIC_AUTH_ORDER)
     fun defaultSecurityFilterChain(http: HttpSecurity): SecurityFilterChain {
-        val requestAttributeHandler = CsrfTokenRequestAttributeHandler()
-        requestAttributeHandler.setCsrfRequestAttributeName("_csrf") // csrfRequestAttributeName property의 기본 값이 "_csrf"이지만 명시적으로 보여주기 위해 작성한 코드
-
         return http
             .securityContext { it.requireExplicitSave(false) }
             .sessionManagement { it.sessionCreationPolicy(SessionCreationPolicy.ALWAYS) }
-            .cors { it.configurationSource { getCorsConfiguration() } }
-            .csrf {
-                it.ignoringRequestMatchers("/register")
-                    .csrfTokenRequestHandler(requestAttributeHandler)
-                    // CSRF 토큰을 처리하는 로직이 있는 객체를 지정
-                    // - CsrfFilter의 doFilterInternal() 안에서 CsrfTokenRequestAttributeHandler의 handle()을 호출
-                    //   - cf. https://docs.spring.io/spring-security/reference/servlet/exploits/csrf.html#csrf-token-request-handler
-                    //   - 다른 구현 클래스로 XorCsrfTokenRequestAttributeHandler이 있으며, 이 객체를 사용하는 것이 기본값
-                    // - handle()에서 csrfRequestAttributeName property의 값을 이용해 토큰을 처리함
-                    .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
-                    // CSRF 토큰을 담을 공간을 지정
-                    // - HttpSessionCsrfTokenRepository는 서버의 세션에 저장, CookieCsrfTokenRepository는 클라이언트의 세션 쿠키에 저장하도록 동작
-                    // - HttpOnly 속성을 false로 해야 스크립트로 쿠키 값을 읽을 수 있음
-            }
+            .cors { getCorsConfigurer(it) }
+            .csrf { getCsrfConfigurer(it) }
             .addFilterAfter(CsrfCookieFilter(), BasicAuthenticationFilter::class.java)
             .authorizeHttpRequests { requests ->
                 requests
@@ -88,12 +75,29 @@ class ProjectSecurityConfig {
             .build()
     }
 
-    private fun getCorsConfiguration() = CorsConfiguration()
-        .also { it.addAllowedOrigin("http://localhost:4200") }
-        .also { it.addAllowedMethod("*") }
-        .also { it.allowCredentials = true }
-        .also { it.addAllowedHeader("*") }
-        .also { it.maxAge = 3600L } // Access-Control-Max-Age를 뜻함(Cache-Control의 max-age가 아님)
+    private fun getCorsConfigurer(configurer: CorsConfigurer<HttpSecurity>) = configurer
+        .configurationSource {
+            CorsConfiguration()
+                .also { it.addAllowedOrigin("http://localhost:4200") }
+                .also { it.addAllowedMethod("*") }
+                .also { it.allowCredentials = true }
+                .also { it.addAllowedHeader("*") }
+                .also { it.maxAge = 3600L } // Access-Control-Max-Age를 뜻함(Cache-Control의 max-age가 아님)
+        }
+
+    private fun getCsrfConfigurer(configurer: CsrfConfigurer<HttpSecurity>) = configurer
+        .ignoringRequestMatchers("/register")
+        .csrfTokenRequestHandler(CsrfTokenRequestAttributeHandler().also { it.setCsrfRequestAttributeName("_csrf") }) // csrfRequestAttributeName property의 기본 값이 "_csrf"이지만 명시적으로 보여주기 위해 작성한 코드
+        // CSRF 토큰을 처리하는 로직이 있는 객체를 지정
+        // - CsrfFilter의 doFilterInternal() 안에서 CsrfTokenRequestAttributeHandler의 handle()을 호출
+        //   - cf. https://docs.spring.io/spring-security/reference/servlet/exploits/csrf.html#csrf-token-request-handler
+        //   - 다른 구현 클래스로 XorCsrfTokenRequestAttributeHandler이 있으며, 이 객체를 사용하는 것이 기본값
+        // - handle()에서 csrfRequestAttributeName property의 값을 이용해 토큰을 처리함
+        .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
+        // CSRF 토큰을 담을 공간을 지정
+        // - HttpSessionCsrfTokenRepository는 서버의 세션에 저장, CookieCsrfTokenRepository는 클라이언트의 세션 쿠키에 저장하도록 동작
+        // - HttpOnly 속성을 false로 해야 스크립트로 쿠키 값을 읽을 수 있음
+
 
 /*
 - InMemoryUserDetailsManager 관련 주석 처리
