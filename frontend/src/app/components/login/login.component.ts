@@ -30,8 +30,12 @@ export class LoginComponent implements OnInit {
         
         this.model.authStatus = 'AUTH';
         window.sessionStorage.setItem("userdetails",JSON.stringify(this.model));
+        // ------------ CSRF 토큰 관련 ------------
+        // XSRF-TOKEN 자체는 응답에서 Set-Cookie 헤더로 오기 때문에 알아서 Cookie에 저장되어 있음
+        // "XSRF-TOKEN"이라는 이름을 가진 cookie를 가져와서 session storage에 저장
         let xsrf = getCookie('XSRF-TOKEN')!;
         window.sessionStorage.setItem("XSRF-TOKEN",xsrf);
+        // ------------ CSRF 토큰 관련 끝 ------------
         this.router.navigate(['dashboard']);
       });
 

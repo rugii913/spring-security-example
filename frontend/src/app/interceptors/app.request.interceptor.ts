@@ -18,10 +18,12 @@ export class XhrInterceptor implements HttpInterceptor {
     if(this.user && this.user.password && this.user.email){
       httpHeaders = httpHeaders.append('Authorization', 'Basic ' + window.btoa(this.user.email + ':' + this.user.password));
     }
+    // ------------ CSRF 토큰 관련 ------------
     let xsrf = sessionStorage.getItem('XSRF-TOKEN');
-    if(xsrf){
-      httpHeaders = httpHeaders.append('X-XSRF-TOKEN', xsrf);  
+    if(xsrf){ // session storage에 "XSRF-TOKEN"이 있으면, 요청 헤더에 "X-XSRF-TOKEN"라는 이름으로 해당 값을 추가
+      httpHeaders = httpHeaders.append('X-XSRF-TOKEN', xsrf);
     }
+    // ------------ CSRF 토큰 관련 끝 ------------
     httpHeaders = httpHeaders.append('X-Requested-With', 'XMLHttpRequest');
     const xhr = req.clone({
       headers: httpHeaders
