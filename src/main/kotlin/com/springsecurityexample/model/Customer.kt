@@ -13,7 +13,7 @@ class Customer(
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY) val password: String, // TODO access가 무슨 역할인지 알아보기 - HTTP 요청에는 포함, 응답에는 제외
     val role: String,
     val createDate: LocalDate,
-    @JsonIgnore @OneToMany(mappedBy = "customer", fetch = FetchType.EAGER) var authorities: Set<Authority>, // TODO JsonIgnore가 무슨 역할인지 알아보기 - HTTP 요청, 응답에서 해당 필드 제외
+    @JsonIgnore @OneToMany(mappedBy = "customer", fetch = FetchType.EAGER) var authorities: Set<Authority> = setOf(), // TODO JsonIgnore가 무슨 역할인지 알아보기 - HTTP 요청, 응답에서 해당 필드 제외
 ) {
 
     @Id

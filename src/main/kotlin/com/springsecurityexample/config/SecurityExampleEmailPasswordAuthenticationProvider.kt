@@ -1,10 +1,12 @@
 package com.springsecurityexample.config
 
+import com.springsecurityexample.model.Authority
 import com.springsecurityexample.repository.CustomerRepository
 import org.springframework.security.authentication.AuthenticationProvider
 import org.springframework.security.authentication.BadCredentialsException
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.security.core.Authentication
+import org.springframework.security.core.GrantedAuthority
 import org.springframework.security.core.authority.SimpleGrantedAuthority
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.stereotype.Component
@@ -31,8 +33,10 @@ class SecurityExampleEmailPasswordAuthenticationProvider(
         val inputPassword = authentication.credentials.toString()
         check(passwordEncoder.matches(inputPassword, foundCustomer.password)) { throw BadCredentialsException("Invalid password!") }
 
-        return UsernamePasswordAuthenticationToken(inputEmail, inputPassword, listOf(SimpleGrantedAuthority(foundCustomer.role)))
+        return UsernamePasswordAuthenticationToken(inputEmail, inputPassword, getGrantedAuthorities(foundCustomer.authorities))
     }
+
+    private fun getGrantedAuthorities(authorities: Set<Authority>) = authorities.map { SimpleGrantedAuthority(it.name) }
 
     override fun supports(authentication: Class<*>) =
         UsernamePasswordAuthenticationToken::class.java.isAssignableFrom(authentication)
