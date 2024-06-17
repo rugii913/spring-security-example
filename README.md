@@ -177,10 +177,11 @@
     - [MDN 문서 - Cross-Origin Resource Sharing(CORS)](https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS)
     - [W3C Recommendation - Cross-Origin Resource Sharing](https://www.w3.org/TR/2020/SPSD-cors-20200602/)
     - [W3C Wiki 문서 - CORS](https://www.w3.org/wiki/CORS)
+    - [기타 블로그 - CSRF, CORS 개념](https://redbinalgorithm.tistory.com/448)
 - CORS 규칙을 설정하지 않으면 왜 기본적으로 통신을 막는가?
   - CORS는 W3C 표준으로 정해져있음
     - 현대 브라우저들이 이 표준을 따르고 있음
-    - 해당 표준의 목적은 통신을 막는 것이 아니라 오히려 same origin restriction을 제거하기 위한 것
+    - 해당 표준의 목적은 통신을 막는 것이 아니라 오히려 same origin restriction(SOP, Same-Origin Policy)을 제거하기 위한 것
   - 보안 위협 및 기존에 널리 퍼진 same origin restriction을 고려하여
     - 기본 설정으로는 cross-origin 간 resource 공유를 막되
     - 표준을 따르는 일정한 규칙에 의거하여 안전하고 편리하게 cross-origin 간 resource를 공유하자는 것
@@ -199,3 +200,53 @@
   - 반대로 말하면 preflight 요청에서 적절한 Access-Control-Allow-Origin 헤더 등을 발견할 수 있다면
     - 즉 백엔드 서버에서 적절히 헤더를 설정해줬다면 
     - 브라우저가 preflight 요청 후 주된 요청을 보내는 데에 문제가 없음 
+
+### CSRF 또는 XSRF(Cross-Site Request Forgery, 사이트 간 요청 위조)
+- CSRF란?
+  - (CORS와는 다르게) CSRF는 보안 공격의 한 종류
+  - CSRF 기술을 이용한 공격 단계
+    - 참고 [기타 블로그 - CSRF란, CSRF 동작원리, CSRF 방어방법](https://devscb.tistory.com/123) 
+    - (1) 사용자가 특정 사이트 A에 정상적인 접근을 통해 해당 오리지널 도메인의 cookie가 브라우저에 저장됨
+      - cookie는 요청을 받을 도메인 별로 구분되어 저장, 그리고 해당 도메인에 요청 시 해당 도메인에 대한 cookie가 자동으로 담겨 보내짐
+    - (2) 사용자가 같은 브라우저에서 악성 사이트에 접속, 악성 링크를 클릭
+      - 악성 링크의 내용은 A 도메인 사이트에서 A의 정보를 변경하는 등의 악성 form, 악성 script 등
+      - 사용자가 링크 내의 뭔가를 클릭하면 A 사이트 내에서 form을 submit 하거나, A 사이트 내에서 자동으로 해당 내용이 실행되도록 함
+    - (3) 악성 링크의 악성 작업이 동작
+      - 사용자의 브라우저에 A 도메인에 대한 cookie가 저장되어 있기 때문에, 악성 요청을 위한 A에서의 인증도 문제 없음
+      - 다른 도메인에서 A의 API를 호출한 것이 아니라 A 사이트 내에서 A의 API를 호출하는 것이므로 CORS로도 막을 수 없음
+        - cf. Origin으로는 구분할 수 없으나, Referer 헤더에 링크를 클릭한 도메인이 기록되므로 1차적으로 Referer를 이용해 막을 수 있음
+- CSRF 공격 방어 방법
+  - (1) Referer 헤더 이용
+    - Referer 헤더에 링크를 클릭한 도메인이 기록되므로 1차적으로 Referer를 이용하여 보호 가능
+  - (2) CSRF 토큰 활용 - Spring Security의 CsrfFilter 및 CookieCsrfTokenRepository를 사용한 예시
+    - 인증 후 백엔드 서버에서 인증 정보와 함께 CSRF 토큰을 Set-Cookie 헤더로 함께 전송
+    - 클라이언트 브라우저는 해당 도메인 cookie에 있는 CSRF 토큰을 session storage에 저장
+    - 클라이언트에서 CSRF 보호 필요 API 호출 시
+      - session storage에 있는 토큰을 정해진 규칙에 따른 이름을 가진 헤더(ex. X-Xsrf-Token)에 담도록 스크립트 작성
+      - cf. CookieCsrfTokenRepository를 사용할 경우 X-Xsrf-Token 헤더 사용
+    - Spring Security의 CSRF 필터는 CSRF 보호 필요 API가 호출된 경우
+      - 헤더에 담긴 CSRF 토큰과 쿠키에 담긴 CSRF 토큰을 비교
+      - 한 쪽에 토큰이 없거나, 토큰이 불일치하는 경우 예외 처리
+- CSRF 토큰을 이용한 보호 대상 엔드포인트 지정
+  - cf. CSRF 공격 보호 시 Spring Security 기본 동작(요청 HTTP 메서드 관련)
+    - CSRF 보안이 적용된 경우 기본 동작으로 server의 resource의 상태 변화를 일으킬 수 있는 요청에는 403 에러로 응답
+    - 즉 요청 HTTP 메서드 중 POST, PUT, PATCH, DELETE 등 메서드에 대해서는 security filter 선에서 API 호출을 막음
+    - GET 메서드는 resource 상태 변화를 일으키지 않으므로 호출을 막지 않음
+  - POST 등 메서드를 이용하더라도 공개된(public) API라면 CSRF 토큰을 이용한 보호 대상에서 제외
+    - 민감한 정보 변경을 다루지 않을 것이기 때문
+- Spring Security X-Xsrf-Token으로 검색해서 찾은 내용들
+  - [기타 블로그 - Cross Site Request Forgery \(CSRF\)](https://kdev.ing/spring-boot-security-csrf/) → Spring Security에서 작동 과정 간략하게 살펴볼 수 있음
+  - [기타 블로그 - \[SpringSecurity\] CSRF란? / CSRF Filter 처리 방식](https://tlatmsrud.tistory.com/77) → CSRF 공격 방법에 대한 이해
+  - [기타 블로그 - \[스프링 Security\] CSRF 토큰 이야기 - 그래서 개발자는 뭘 하면 되죠](https://blog.paimon.studio/46) → 전체적인 흐름
+  - CSRF 공격 자세한 코드
+    - [HackTricks - CSRF \(Cross Site Request Forgery\)](https://book.hacktricks.xyz/v/kr/pentesting-web/csrf-cross-site-request-forgery)
+    - [기타 블로그 - CSRF\(Cross Site Request Forgery\)](https://xn--ex3bt1ov9l.kr/352)
+    - [기타 블로그 - CSRF01 & CSRF02 공격 시나리오](https://jisu069.tistory.com/86)
+    - [기타 블로그 - CSRF](https://jisu069.tistory.com/80)
+  - [기타 블로그 - Side-project : Spring Security + CSRF Token 활용하기\(1\)](https://velog.io/@kimujin99/Side-project-Spring-Security-CSRF-Token-활용하기1)
+  - [기타 블로그 - \[Spring Security\] CORS, CSRF란?](https://jaykaybaek.tistory.com/29)
+  - [기타 블로그 - Spring Security CSRF 설정](https://cheese10yun.github.io/spring-csrf/)
+- 더 알아볼 것들
+  - [Spring Security 공식 문서 - Cross Site Request Forgery \(CSRF\)](https://docs.spring.io/spring-security/reference/servlet/exploits/csrf.html)
+  - 클래스들 더 자세히 파보기
+    - CsrfFilter, CsrfConfigurer, CsrfTokenRequestAttributeHandler, XorCsrfTokenRequestAttributeHandler, CookieCsrfTokenRepository 등
