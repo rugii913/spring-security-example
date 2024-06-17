@@ -1,10 +1,8 @@
 package com.springsecurityexample.model
 
+import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonProperty
-import jakarta.persistence.Entity
-import jakarta.persistence.GeneratedValue
-import jakarta.persistence.GenerationType
-import jakarta.persistence.Id
+import jakarta.persistence.*
 import java.time.LocalDate
 
 @Entity
@@ -12,9 +10,10 @@ class Customer(
     val name: String,
     val email: String,
     val mobileNumber: String,
-    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY) val password: String, // TODO access가 무슨 역할인지 알아보기
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY) val password: String, // TODO access가 무슨 역할인지 알아보기 - HTTP 요청에는 포함, 응답에는 제외
     val role: String,
     val createDate: LocalDate,
+    @JsonIgnore @OneToMany(mappedBy = "customer", fetch = FetchType.EAGER) var authorities: Set<Authority>, // TODO JsonIgnore가 무슨 역할인지 알아보기 - HTTP 요청, 응답에서 해당 필드 제외
 ) {
 
     @Id
