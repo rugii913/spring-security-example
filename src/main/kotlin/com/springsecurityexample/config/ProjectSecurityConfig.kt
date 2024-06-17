@@ -67,7 +67,11 @@ class ProjectSecurityConfig {
             .addFilterAfter(CsrfCookieFilter(), BasicAuthenticationFilter::class.java)
             .authorizeHttpRequests { requests ->
                 requests
-                    .requestMatchers("/my-account", "my-balance", "/my-loans", "/my-cards", "/contact", "/user").authenticated()
+                    .requestMatchers("/my-account").hasAuthority("VIEWACCOUNT")
+                    .requestMatchers("/my-balance").hasAnyAuthority("VIEWACCOUNT", "VIEWBALANCE")
+                    .requestMatchers("/my-loans").hasAuthority("VIEWLOANS")
+                    .requestMatchers("/my-cards").hasAuthority("VIEWCARDS")
+                    .requestMatchers("/contact", "/user").authenticated()
                     .requestMatchers("/notices", "/register").permitAll()
             }
             .formLogin(Customizer.withDefaults())
