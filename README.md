@@ -250,3 +250,55 @@
   - [Spring Security 공식 문서 - Cross Site Request Forgery \(CSRF\)](https://docs.spring.io/spring-security/reference/servlet/exploits/csrf.html)
   - 클래스들 더 자세히 파보기
     - CsrfFilter, CsrfConfigurer, CsrfTokenRequestAttributeHandler, XorCsrfTokenRequestAttributeHandler, CookieCsrfTokenRepository 등
+
+## Authorization
+
+### Authentication과 Authorization의 차이
+- authentication(AuthN)은 시스템, 애플리케이션에 접근하는 사용자를 식별
+  - authentication이 없는 경우, 보호되는 API에 접근하지 못하도록 함
+  - HTTP 상태 401(Unauthorized)과 주로 관련
+- authorization(AuthZ)은 인증(authentication)이 완료된 후 사용자의 권한(authority, privilege, role 등)을 체크
+  - 사용자가 갖고 있는 authority에 기반하여 애플리케이션의 각 기능에 대한 접근을 제어 
+  - HTTP 상태 403(Forbidden)과 주로 관련
+ 
+### Spring Security의 authority 저장 방식 - GrantedAuthority 인터페이스와 AbstractAuthenticationToken 추상 클래스
+- GrantedAuthority 인터페이스
+  - 메서드는 getAuthority() 하나 → String 반환 
+  - 샘플 구현 클래스로 SimpleGrantedAuthority
+- GrantedAuthority type 객체를 Authentication 객체에서 사용
+  - 보통 Authentication 구현 클래스는 AbstractAuthenticationToken 추상 클래스를 구현함
+    - AbstractAuthenticationToken에서 Collection<GrantedAuthority> type의 authorities라는 field를 가짐
+    - 이 authorities field를 이용하여 각 API endpoint에 대한 접근을 제어
+  - ex. AuthenticationProvider에서 UsernamePasswordAuthenticationToken을 생성할 때 List<GrantedAuthority>를 넘기며 생성
+    - super class인 AbstractAuthenticationToken의 authorities 프로퍼티가 됨
+
+### API 호출 시 Spring Security의 authority 검사 방식 - 보완 작성 필요
+- (FilterChainProxy를 거쳐) AuthorizationFilter 객체의 doFilter() 호출 시
+  - AuthorityAuthorizationManager의 check()를 호출하여 인가 작업을 처리(→ AuthorizationFilter 95줄 doFilter() 메서드 내부)
+    - 특히 AuthorityAuthorizationManager의 구현 클래스인 RequestMatcherDelegatingAuthorizationManager에서 엔드포인트에 대한 작업을 처리
+    - authority에 기반하여 각 엔드포인트에 대해 접근이 허용된 authority와 비교하는 하는 로직이 실행
+      - AuthoritiesAuthorizationManager의 check()부터 getGrantedAuthorities()까지의 로직 흐름을 참고할 것
+    - 체크 결과로 AuthorizationDecision type 객체에 해당 엔드포인트에 대한 granted 여부를 담음
+      - 더 상세히 보면 그 subtype인 AuthorityAuthorizationDecision type 객체에 authority 정보까지 담김
+
+### Spring Security의 authority, role
+- cf. 다른 프레임워크에서는 다른 용어를 사용할 수 있으나, Spring Security에서는 아래와 같이 받아들이면 됨 
+- authority는 개별 privilege 혹은 action에 대한 것
+  - 세밀한 방식으로 access 제한
+- role은 privilege 혹은 action의 그룹으로 묶은 것
+  - 덜 세밀한 방식으로 access 제한
+- 특정 문자열이 authority인지 role인지 구별하기 위한 Spring Security 내부에서 처리하는 표준이 정해져 있음
+  - role의 경우 ROLE prefix가 붙음 (ex. ROLE_ADMIN)
+
+#### Spring Security filter chain 설정 시 url별로 authority 혹은 role 설정을 위한 메서드들
+- authority 설정
+  - hasAuthority() → endpoint에서 하나의 authority만을 받아들이는 경우
+  - hasAnyAuthority() → endpoint에서 여러 authority들을 받아들이는 경우
+  - access() → Spring Expression Language(SpEL) 사용하여 복잡한 조건(OR, AND, NOT 등) 처리
+- role 설정
+  - **유의사항** → 아래 메서드에 문자열을 넘길 때 "ROLE_" prefix는 붙이지 않음, Spring Security에서 알아서 붙여서 처리
+    - "ROLE_" prefix는 DB에서 role을 처리할 때 붙임 
+  - hasRole() → endpoint에서 하나의 role만을 받아들이는 경우
+  - hasAnyRole() → endpoint에서 여러 role들을 받아들이는 경우
+  - access() → Spring Expression Language(SpEL) 사용하여 복잡한 조건(OR, AND, NOT 등) 처리
+- cf. access()는 authority, role 외 사용자의 접속 국가, 사용자의 시간 등을 조건으로 처리할 수도 있음 
