@@ -1,6 +1,7 @@
 package com.springsecurityexample.config
 
 import com.springsecurityexample.filter.CsrfCookieFilter
+import com.springsecurityexample.filter.RequestValidationBeforeFilter
 import org.springframework.boot.autoconfigure.security.SecurityProperties
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
@@ -65,6 +66,7 @@ class ProjectSecurityConfig {
             .cors { getCorsConfigurer(it) }
             .csrf { getCsrfConfigurer(it) }
             .addFilterAfter(CsrfCookieFilter(), BasicAuthenticationFilter::class.java)
+            .addFilterBefore(RequestValidationBeforeFilter(), BasicAuthenticationFilter::class.java)
             .authorizeHttpRequests { requests ->
                 requests
 //                    .requestMatchers("/my-account").hasAuthority("VIEWACCOUNT")
