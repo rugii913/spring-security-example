@@ -1,5 +1,6 @@
 package com.springsecurityexample.config
 
+import com.springsecurityexample.filter.AuthoritiesLoggingAfterFilter
 import com.springsecurityexample.filter.CsrfCookieFilter
 import com.springsecurityexample.filter.RequestValidationBeforeFilter
 import org.springframework.boot.autoconfigure.security.SecurityProperties
@@ -65,8 +66,10 @@ class ProjectSecurityConfig {
             .sessionManagement { it.sessionCreationPolicy(SessionCreationPolicy.ALWAYS) }
             .cors { getCorsConfigurer(it) }
             .csrf { getCsrfConfigurer(it) }
-            .addFilterAfter(CsrfCookieFilter(), BasicAuthenticationFilter::class.java)
             .addFilterBefore(RequestValidationBeforeFilter(), BasicAuthenticationFilter::class.java)
+            // addFilterAfter(..)의 afterFilter의 argument로 같은 built-in filter를 지정한 경우, addFilterAfter() 순서대로 등록
+            .addFilterAfter(CsrfCookieFilter(), BasicAuthenticationFilter::class.java)
+            .addFilterAfter(AuthoritiesLoggingAfterFilter(), BasicAuthenticationFilter::class.java)
             .authorizeHttpRequests { requests ->
                 requests
 //                    .requestMatchers("/my-account").hasAuthority("VIEWACCOUNT")
