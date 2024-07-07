@@ -302,3 +302,71 @@
   - hasAnyRole() → endpoint에서 여러 role들을 받아들이는 경우
   - access() → Spring Expression Language(SpEL) 사용하여 복잡한 조건(OR, AND, NOT 등) 처리
 - cf. access()는 authority, role 외 사용자의 접속 국가, 사용자의 시간 등을 조건으로 처리할 수도 있음 
+
+## Spring Security의 filter
+- 참고 https://docs.spring.io/spring-security/reference/servlet/architecture.html
+
+### servlet filter
+- \(참고 자료\) 개인 블로그 DolphaGo - [\[Servlet\] 서블릿 필터 \(Filter\)](https://blog.naver.com/adamdoha/221665607853) 
+- tomcat-embed-core 라이브러리에 있는 jakarta.servlet.Filter interface의 동작은
+  - servlet(jakarta.servlet.Servlet interface)과 거의 비슷하지만 filtering 역할을 나타냄
+    - ServletRequest에 대한 전처리 혹은 ServletResponse에 대한 후처리를 담당
+    - client의 요청이 servlet을 호출하기 전 혹은 servlet 호출 후 응답을 반환하기 전에 특정 로직을 수행
+    - 이처럼 filtering 역할을 하는 filter들을 filter chain에 등록하고, 등록 순서대로 실행
+- Filter interface의 method
+  - filter의 전처리, 후처리 로직은 doFilter()에 구현
+  - servlet container가 filter 인스턴스를 초기화할 때 filter의 init()을 호출
+  - filter 인스턴스를 제거할 때 destroy()를 호출
+- Filter의 doFilter(..)와 FilterChain type parameter
+  - filter 인스턴스의 doFilter()의 로직은 FilterChain type인 chain parameter의 doFilter()를 호출 라인을 기준으로 기능 구분
+    - chain.doFilter(request, response) 호출 라인을 기준으로
+      - 해당 메서드 호출 전, 전처리 로직을 작성
+      - 해당 메서드 호출 후, 후처리 로직을 작성
+    - chain.doFilter()을 호출함으로써 FilterChain 내의 다음 filter가 실행
+
+### Spring Security filter - ??? 내용 더 정확히 알아보고 수정 필요
+- DelegatingFilterProxy(spring-web 라이브러리의 org.springframework.web.filter 패키지)
+  - cf. org.springframework.web.filter.GenericFilterBean의 subclass 
+  - servlet container의 생명 주기와 Spring의 ApplicationContext(Spring bean container)를 연결하는 역할
+    - servlet container에 직접 filter 인스턴스를 등록할 수도 있지만, 이 경우 Spring과는 관련이 없으므로 Spring의 관리를 받을 수 없음
+    - 이 servlet container와 IoC container의 불일치를 해결하는 것이 DelegatingFilterProxy와 FilterChainProxy
+      - 자세한 내용은 각 javadoc 문서 참고
+  - 실제로 servlet filter에 등록되는 것은 DelegatingFilterProxy
+    - Spring Boot의 경우 SecurityFilterAutoConfiguration에 의해
+      - springSecurityFilterChain이라는 bean이 존재한다면 DelegatingFilterProxy를 servlet filter로 등록
+    - DelegatingFilterProxy의 doFilter()에서 invokeDelegate()를 호출하여 Filter type delegate 필드의 doFilter()를 호출
+    - 요청이 한 번도 들어오지 않은 경우 delegate가 null일 수 있는데
+      - 이 경우 doFilter() 내에서 initDelegate()를 호출함으로써
+      - springSecurityFilterChain bean을 delegate 필드로 할당함
+      - (기본값을 수정하지 않은 경우) FilterChainProxy(GenericFilterBean의 subclass) type bean이 delegate로 할당됨
+    - 이 FilterChainProxy의 흐름을 따라 개발자가 작성한 SecurityFilterChain을 구현한 bean을 호출하게 됨
+  - 따라서 Spring Security 사용자는 springSecurityFilterChain bean을 이용하여
+    - Spring framework가 적절히 관리해주는 방식으로 filter를 이용할 수 있게 되는 것
+- FilterChainProxy를 사용할 때의 장점(servlet filter를 직접 사용하거나, DelegatingFilterProxy를 사용할 때와 비교)
+  - debug point로 활용하기 좋음
+  - FilterChainProxy는 Spring Security의 중심으로 필수적인 작업을 수행, 이 기반 위에 개발자가 작성한 filter를 추가하는 것
+  - SecurityFilterChain을 호출해야 하는 상황을 더 유연하게 결정 가능(RequestMatcher interface 사용)
+    - cf. servlet container를 직접 사용할 경우 기본적으로는 url만으로 filter를 호출할지 말지 결정
+    - 다중 SecurityFilterChain을 갖도록 하여 적절한 상황에 적절한 SecurityFilterChain이 호출되도록 할 수 있음
+- cf. FilterChainProxy에서 SpringFilterChain들을 가져오는 방식은 복잡함
+  - WebSecurity의 performBuild() 호출 시 WebSecurityConfiguration과 HttpSecurity를 사용하여 적절히 build
+  - HttpSecurity에는 기본적인 built-in filter의 configuration이 있으므로
+    - 이에 더해 custom filter를 등록하여 SecurityFilterChain 인스턴스를 구성하는 방식이 됨
+
+### Spring Security custom filter 등록 방법
+- (1) jakarta.servlet.Filter를 구현하는 클래스 작성
+- (2) SecurityFilterChain bean을 등록하는 메서드에서 custom filter를 등록
+  - addFilterBefore(), addFilterAfter(), addFilterAt() 사용
+  - 위 메서드들의 첫번째 parameter는 custom filter 객체, 두번째 parameter는 Spring Security built-in filter의 class 정보
+
+### GenericFilterBean과 OncePerRequestFilter
+
+#### abstract class GenericFilterBean
+- 이 역시 Filter를 구현함
+  - FilterChainProxy가 GenericFilterBean의 subclass 중 하나 
+
+#### abstract class OncePerRequestFilter
+- doFilter()에 딱 한 번만 실행되도록(여러 번 실행되지 않도록) 하는 로직이 작성됨
+- OncePerRequestFilter를 extends할 때 filtering을 위한 로직은 doFilterInternal()에 작성
+- 되도록 jakarta.servlet.Filter를 구현하기보다는 OncePerRequestFilter를 확장하여 사용할 것
+- cf. BasicAuthenticationFilter 같은 built-in filter도 OncePerRequestFilter의 subclass
