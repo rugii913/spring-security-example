@@ -63,8 +63,12 @@ class ProjectSecurityConfig {
     @Order(SecurityProperties.BASIC_AUTH_ORDER)
     fun defaultSecurityFilterChain(http: HttpSecurity): SecurityFilterChain {
         return http
-            .securityContext { it.requireExplicitSave(false) }
-            .sessionManagement { it.sessionCreationPolicy(SessionCreationPolicy.ALWAYS) }
+            /*
+            * // session 기반으로 인증하지 않고, JWT 기반으로 인증하며 주석처리
+            * .securityContext { it.requireExplicitSave(false) }
+            * .sessionManagement { it.sessionCreationPolicy(SessionCreationPolicy.ALWAYS) }
+            * */
+            .sessionManagement{ it.sessionCreationPolicy(SessionCreationPolicy.STATELESS) } // SessionCreationPolicy.STATELESS - HttpSession을 생성하지 않고, SecurityContext에서도 이를 활용하지 않음
             .cors { getCorsConfigurer(it) }
             .csrf { getCsrfConfigurer(it) }
             .addFilterBefore(RequestValidationBeforeFilter(), BasicAuthenticationFilter::class.java)
@@ -100,6 +104,7 @@ class ProjectSecurityConfig {
                 .also { it.addAllowedMethod("*") }
                 .also { it.allowCredentials = true }
                 .also { it.addAllowedHeader("*") }
+                .also { it.addExposedHeader("Authorization") } // 이 HTTP header에 JWT를 담아서 보낼 것 // cf. CSRF 관련 header는 framework에서 추가한 header이므로 framework에서 알아서 해결할 것 → 신경쓰지 않아도 됨  
                 .also { it.maxAge = 3600L } // Access-Control-Max-Age를 뜻함(Cache-Control의 max-age가 아님)
         }
 
