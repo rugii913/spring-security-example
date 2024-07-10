@@ -69,9 +69,13 @@ class ProjectSecurityConfig {
             .cors { getCorsConfigurer(it) }
             .csrf { getCsrfConfigurer(it) }
             .addFilterBefore(RequestValidationBeforeFilter(), BasicAuthenticationFilter::class.java)
-            // addFilterAt()은 atFilter의 argument로 지정한 그 위치에 filter를 등록함
-            // - 같은 위치의 filter들은 어떤 순서대로 등록될지 모름(non-deterministic), 같은 위치의 filter를 갈아 끼우는 게 아님에 유의, filter를 사용하지 않으려면 아예 등록하지 말아야 함
-            // - 실무에서 거의 사용할 일이 없을 것이고, 만약 사용한다면 등록 순서에 문제가 없는지, 비즈니스 로직에 다른 영향은 없는지 유의해야 함
+            // credential을 이용한 인증 filter 전에 JWT를 이용한 인증 filter를 거치도록 함
+            .addFilterBefore(JWTTokenValidatorFilter(), BasicAuthenticationFilter::class.java)
+            /*
+            *  addFilterAt()은 atFilter의 argument로 지정한 그 위치에 filter를 등록함
+            * - 같은 위치의 filter들은 어떤 순서대로 등록될지 모름(non-deterministic), 같은 위치의 filter를 갈아 끼우는 게 아님에 유의, filter를 사용하지 않으려면 아예 등록하지 말아야 함
+            * - 실무에서 거의 사용할 일이 없을 것이고, 만약 사용한다면 등록 순서에 문제가 없는지, 비즈니스 로직에 다른 영향은 없는지 유의해야 함
+            * */
             .addFilterAt(AuthoritiesLoggingAtFilter(), BasicAuthenticationFilter::class.java)
             // addFilterAfter(..)의 afterFilter의 argument로 같은 built-in filter를 지정한 경우, addFilterAfter() 순서대로 등록
             .addFilterAfter(CsrfCookieFilter(), BasicAuthenticationFilter::class.java)

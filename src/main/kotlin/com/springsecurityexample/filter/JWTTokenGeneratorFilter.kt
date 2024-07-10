@@ -9,6 +9,7 @@ import jakarta.servlet.http.HttpServletResponse
 import org.springframework.security.core.GrantedAuthority
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.web.filter.OncePerRequestFilter
+import java.nio.charset.StandardCharsets
 import java.util.*
 
 class JWTTokenGeneratorFilter : OncePerRequestFilter() {
@@ -21,7 +22,7 @@ class JWTTokenGeneratorFilter : OncePerRequestFilter() {
         // BasicAuthenticationFilter에서 credential을 이용한 인증 후, 이를 통해 생성된 Authentication 객체를 이용
         val authentication = SecurityContextHolder.getContext().authentication
         if (null != authentication) {
-            val key = Keys.hmacShaKeyFor(SecurityConstants.JWT_KEY.toByteArray())
+            val key = Keys.hmacShaKeyFor(SecurityConstants.JWT_KEY.toByteArray(StandardCharsets.UTF_8))
             val now = Date()
 
             val jwt = Jwts.builder() // builder를 통해 JWT를 만드는 과정
