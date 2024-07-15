@@ -57,6 +57,6 @@ class JWTTokenGeneratorFilter : OncePerRequestFilter() {
         for (authority in authorities) {
             authoritiesSet.add(authority.authority)
         }
-        return authoritiesSet.joinToString(separator = ".")
+        return authoritiesSet.joinToString(separator = ",")
     }
 }

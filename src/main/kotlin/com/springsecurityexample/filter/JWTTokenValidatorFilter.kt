@@ -30,7 +30,8 @@ class JWTTokenValidatorFilter : OncePerRequestFilter() {
                 val claims = Jwts.parserBuilder()
                     .setSigningKey(key)
                     .build()
-                    .parseClaimsJwt(jwt)
+                    .parseClaimsJws(jwt) // A Claims JWS is a JWT with a Claims body that has been cryptographically signed.
+                    // .parseClaimsJwt(jwt) // parseClaimsJwt()가 아닌 parseClaimsJws()를 사용해야 함 - 자세한 내용은 JwtParser 인터페이스의 javadoc 참고
                     .body // JWT에서 header와 signature를 제외한 payload 부분만 가져옴
 
                 val username = claims["username"].toString()
@@ -40,7 +41,7 @@ class JWTTokenValidatorFilter : OncePerRequestFilter() {
                 val authentication = UsernamePasswordAuthenticationToken(
                     username,
                     null,
-                    AuthorityUtils.commaSeparatedStringToAuthorityList(authorities)
+                     AuthorityUtils.commaSeparatedStringToAuthorityList(authorities)
                 )
 
                 // 생성한 UsernamePasswordAuthenticationToken 객체를 SecurityContext에 두어, 인증된 요청임을 표시
