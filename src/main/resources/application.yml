@@ -19,7 +19,7 @@ spring:
 #      name: admin
 #      password: admin
 
-logging:
-  level:
-    org.springframework.security.web.FilterChainProxy: "debug" # FilterChainProxy 로그 레벨 설정
+#logging:
+#  level:
+#    org.springframework.security.web.FilterChainProxy: "debug" # FilterChainProxy 로그 레벨 설정
     # 추가로 FilterChainProxy의 내부 클래스 VirtualFilterChain의 doFilter()에 중단점 설정하고 확인 진행
