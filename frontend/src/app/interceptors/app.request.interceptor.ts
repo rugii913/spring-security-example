@@ -16,7 +16,14 @@ export class XhrInterceptor implements HttpInterceptor {
       this.user = JSON.parse(sessionStorage.getItem('userdetails')!);
     }
     if(this.user && this.user.password && this.user.email){
+      // credential을 이용한 인증(로그인 요청) 시 사용
       httpHeaders = httpHeaders.append('Authorization', 'Basic ' + window.btoa(this.user.email + ':' + this.user.password));
+    } else {
+      // 로그인 후 인증(+인가)을 위해 사용
+      let jwt = sessionStorage.getItem("Authorization");
+      if (jwt) {
+        httpHeaders = httpHeaders.append("Authorization", jwt)
+      }
     }
     // ------------ CSRF 토큰 관련 ------------
     let xsrf = sessionStorage.getItem('XSRF-TOKEN');

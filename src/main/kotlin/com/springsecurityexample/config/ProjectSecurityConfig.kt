@@ -1,9 +1,6 @@
 package com.springsecurityexample.config
 
-import com.springsecurityexample.filter.AuthoritiesLoggingAfterFilter
-import com.springsecurityexample.filter.AuthoritiesLoggingAtFilter
-import com.springsecurityexample.filter.CsrfCookieFilter
-import com.springsecurityexample.filter.RequestValidationBeforeFilter
+import com.springsecurityexample.filter.*
 import org.springframework.boot.autoconfigure.security.SecurityProperties
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
@@ -63,18 +60,27 @@ class ProjectSecurityConfig {
     @Order(SecurityProperties.BASIC_AUTH_ORDER)
     fun defaultSecurityFilterChain(http: HttpSecurity): SecurityFilterChain {
         return http
-            .securityContext { it.requireExplicitSave(false) }
-            .sessionManagement { it.sessionCreationPolicy(SessionCreationPolicy.ALWAYS) }
+            /*
+            * // session 기반으로 인증하지 않고, JWT 기반으로 인증하며 주석처리
+            * .securityContext { it.requireExplicitSave(false) }
+            * .sessionManagement { it.sessionCreationPolicy(SessionCreationPolicy.ALWAYS) }
+            * */
+            .sessionManagement{ it.sessionCreationPolicy(SessionCreationPolicy.STATELESS) } // SessionCreationPolicy.STATELESS - HttpSession을 생성하지 않고, SecurityContext에서도 이를 활용하지 않음
             .cors { getCorsConfigurer(it) }
             .csrf { getCsrfConfigurer(it) }
             .addFilterBefore(RequestValidationBeforeFilter(), BasicAuthenticationFilter::class.java)
-            // addFilterAt()은 atFilter의 argument로 지정한 그 위치에 filter를 등록함
-            // - 같은 위치의 filter들은 어떤 순서대로 등록될지 모름(non-deterministic), 같은 위치의 filter를 갈아 끼우는 게 아님에 유의, filter를 사용하지 않으려면 아예 등록하지 말아야 함
-            // - 실무에서 거의 사용할 일이 없을 것이고, 만약 사용한다면 등록 순서에 문제가 없는지, 비즈니스 로직에 다른 영향은 없는지 유의해야 함
+            // credential을 이용한 인증 filter 전에 JWT를 이용한 인증 filter를 거치도록 함
+            .addFilterBefore(JWTTokenValidatorFilter(), BasicAuthenticationFilter::class.java)
+            /*
+            *  addFilterAt()은 atFilter의 argument로 지정한 그 위치에 filter를 등록함
+            * - 같은 위치의 filter들은 어떤 순서대로 등록될지 모름(non-deterministic), 같은 위치의 filter를 갈아 끼우는 게 아님에 유의, filter를 사용하지 않으려면 아예 등록하지 말아야 함
+            * - 실무에서 거의 사용할 일이 없을 것이고, 만약 사용한다면 등록 순서에 문제가 없는지, 비즈니스 로직에 다른 영향은 없는지 유의해야 함
+            * */
             .addFilterAt(AuthoritiesLoggingAtFilter(), BasicAuthenticationFilter::class.java)
             // addFilterAfter(..)의 afterFilter의 argument로 같은 built-in filter를 지정한 경우, addFilterAfter() 순서대로 등록
             .addFilterAfter(CsrfCookieFilter(), BasicAuthenticationFilter::class.java)
             .addFilterAfter(AuthoritiesLoggingAfterFilter(), BasicAuthenticationFilter::class.java)
+            .addFilterAfter(JWTTokenGeneratorFilter(), BasicAuthenticationFilter::class.java)
             .authorizeHttpRequests { requests ->
                 requests
 //                    .requestMatchers("/my-account").hasAuthority("VIEWACCOUNT")
@@ -100,6 +106,7 @@ class ProjectSecurityConfig {
                 .also { it.addAllowedMethod("*") }
                 .also { it.allowCredentials = true }
                 .also { it.addAllowedHeader("*") }
+                .also { it.addExposedHeader("Authorization") } // 이 HTTP header에 JWT를 담아서 보낼 것 // cf. CSRF 관련 header는 framework에서 추가한 header이므로 framework에서 알아서 해결할 것 → 신경쓰지 않아도 됨  
                 .also { it.maxAge = 3600L } // Access-Control-Max-Age를 뜻함(Cache-Control의 max-age가 아님)
         }
 

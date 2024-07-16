@@ -26,8 +26,11 @@ export class LoginComponent implements OnInit {
   validateUser(loginForm: NgForm) {
     this.loginService.validateLoginDetails(this.model).subscribe(
       responseData => {
+        // 로그인 요청 후 받은 응답에서 Authorization 헤더에 있는 JWT 추출 후 session storage에 "Authorization"을 key로 저장
+        window.sessionStorage.setItem("Authorization", responseData.headers.get("Authorization")!);
+
         this.model = <any> responseData.body;
-        
+
         this.model.authStatus = 'AUTH';
         window.sessionStorage.setItem("userdetails",JSON.stringify(this.model));
         // ------------ CSRF 토큰 관련 ------------
