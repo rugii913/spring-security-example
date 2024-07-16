@@ -363,10 +363,89 @@
 
 #### abstract class GenericFilterBean
 - 이 역시 Filter를 구현함
-  - FilterChainProxy가 GenericFilterBean의 subclass 중 하나 
+  - FilterChainProxy가 GenericFilterBean의 subclass 중 하나
+- ?? 필요한 내용 보충 작성 필요 
 
 #### abstract class OncePerRequestFilter
 - doFilter()에 딱 한 번만 실행되도록(여러 번 실행되지 않도록) 하는 로직이 작성됨
 - OncePerRequestFilter를 extends할 때 filtering을 위한 로직은 doFilterInternal()에 작성
 - 되도록 jakarta.servlet.Filter를 구현하기보다는 OncePerRequestFilter를 확장하여 사용할 것
 - cf. BasicAuthenticationFilter 같은 built-in filter도 OncePerRequestFilter의 subclass
+
+## 토큰 기반 인증과 JWT
+
+### 토큰 기반 인증
+
+- 필요성
+  - 기존의 세션 기반 인증 방식은 여러 애플리케이션들에서 토큰을 공유할 때 불편함이 생김
+    - 특히 MSA 환경에서 불편함이 두드러짐
+  - 이 밖에도
+    - 세션 쿠키의 토큰은 사용자에 대한 정보를 갖고 있지 않음
+      - 매 요청마다 DB의 사용자 데이터를 조회하는 방식으로 구현한다면, 서버에서도 부하 발생
+    - 세션이 유효한 상태라면 세션 쿠키의 토큰 탈취 위험 존재
+      - 탈취 시 무효화할 방법이 없음 
+- 토큰이란?
+  - UUID(Universally Unique Identifier) 형식 문자열 또는 JWT 형태일 수 있음
+    - cf. JSESSION과 같은 세션도 넓게 보면 UUID 형태의 토큰이라고 볼 수도 있으나, 전체 맥락을 보고 서버의 무상태성을 기준으로 구별하면 될 듯함
+  - 일반적으로 로그인 작업 중 사용자 인증 완료 후 처음 생성
+  - 클라이언트 애플리케이션은 토큰을 받은 후 인증 필요 요청 시마다 토큰을 함께 보냄
+    - 서버에서는 클라이언트가 보낸 토큰이 유효한지 확인 후 유효하다면 올바르게 응답 
+- 토큰 사용의 장점
+  - 로그인할 때만 백엔드 애플리케이션에 자격 증명(credential)을 보냄
+    - 이후의 다른 요청에서는 credential이 아닌 토큰을 이용해 인증 처리
+    - credential이 불필요하게 네트워크에 노출되는 것을 막고, 백엔드에서도 credential을 통한 인증을 반복하지 않아도 됨
+    - 토큰이 유효하다면 인증 처리 후 응답
+  - 토큰이 탈취당하더라도, 토큰을 무효화시키는 것만으로 충분
+    - credential까지 변경할 필요가 없음
+  - 토큰의 수명을 짧게 설정할 수 있음
+  - 토큰에 roles, authorities 등 사용자 연관 정보를 저장할 수 있음
+    - MSA 구조에서 end user의 정보가 필요할 때 활용하기 편리
+    - cf. 세션의 토큰을 이용한 방식(ex. JSESSIONID)에서는 이런 장점을 이용할 수는 없음 
+  - 같은 조직 내에 여러 서비스가 있을 때에도 같은 토큰을 재사용하여 사용자 인증 가능
+    - ex. 구글 메일-구글 지도-구글 드라이브-... 바꾸며 사용해도 반복 로그인할 필요가 없음
+    - SSO(Single Sign-On, 통합 인증)를 구현하는 데에 도움이 됨
+  - statless를 유지할 수 있음(특히 MSA 환경이나 클러스터를 구성한 백엔드 서버 인스턴스가 여러 개 있는 경우)
+    - 서버의 세션에 아무것도 저장하지 않아도 됨(토큰이 end user에 대한 정보를 갖고 있음) 
+
+### JWT(JSON Web Token)
+
+- JWT = JSON Web Token?
+  - 내부적으로 데이터를 JSON 형식으로 갖고 있으므로 JSON
+  - web 활용 통신에 사용되므로 Web(특히 UI 클라이언트와 백엔드 애플리케이션 통신 시 사용)
+  - 토큰을 구현한 것이므로 Token
+- JWT의 특징 및 장점
+  - 토큰 내부에서 사용자 관련 데이터를 저장 및 공유할 수 있음
+    - 서버 측 세션에서 사용자 정보를 갖고 있어야 하는 번거로움을 줄여줌
+    - 토큰 자체에서 사용자와 관련된 필요 정보를 갖고 있으므로 stateless를 구현하기 유리
+  - 인증, 인가 양 쪽 모두에 활용 
+  - 여러 서비스가 서로 통신하는 MSA 환경에서 특히 유리
+- JWT의 구성
+  - JWT는 일반적으로 period(.)으로 구분된 header, payload, signature 세 부분으로 구성
+    - 토큰의 모든 정보는 평문(plain text) 형식이 아님
+      - 통상적으로 Base64로 인코딩된 JSON 형식 데이터 
+  - header
+    - 토큰 자체에 대한 메타데이터(ex. 사용 알고리즘, 토큰의 종류 등)
+    - 통상 Base64로 인코딩됨
+  - payload(혹은 body)
+    - 필요한 데이터를 저장하는 부분(ex. 사용자 이름, 이메일, 역할, 만료 시간, 토큰 발행자, 토큰 서명자 등)
+    - 통상 Base64로 인코딩됨
+  - signature(optional)
+    - 해싱 알고리즘 적용 결과물이므로 쉽게 디코딩할 수 없음 
+    - 디지털 서명을 통해 누군가 토큰을 조작하려고 하면 쉽게 감지 가능
+    - 특별한 목적이 없다면 DB나 캐시 등에 인증된 사용자의 토큰을 보관할 필요가 없음
+- JWT의 signature
+  - 필요성
+    - cf. 만약 망 분리, 방화벽 등에 의해 JWT 조작 위험이 없다면 signature를 사용할 필요는 없음 
+      - signature는 JWT의 optional인 부분 → 없어도 됨
+    - 인터넷 통신을 통해 일반적인 end user, client application과 JWT가 공유된다면, signature가 필요
+      - ex. JWT payload 내의 인가 정보를 조작하여, 원래는 접근할 수 없는 자원에 접근 시도 가능
+        - Base64 디코딩, 인코딩으로 쉽게 조작할 수 있음
+  - 인증 서버의 역할
+    - 성공적인 인증 후 토큰에 디지털 서명을 함
+      - SHA-256과 같은 해싱 알고리즘을 이용하여 signature 부분을 생성
+      - 이 때, JWT header, payload + 인증 서버만이 알고 있는 secret 정보를 이용
+      - ex. HMACSHA256(base64UrlEncode(header) + "." + base64UrlEncode(payload), secret) → https://jwt.io 참고
+    - 이후 토큰을 통해 인증 시도 시 header, payload, secret이 조작되었다면, 조작 사실을 signature에 의해 판별할 수 있음
+      - 사용자가 인증을 위해 보낸 토큰을 기반으로 해시 알고리즘을 통해 계산된 signature와 토큰 내의 signature가 match하는지 여부 판단 
+      - 조작 판별 시 추가적으로 인증 서버에서 해당 토큰을 무효화시키는 작업을 할 수도 있음
+  - 더 자세한 내용은 https://jwt.io 참고
