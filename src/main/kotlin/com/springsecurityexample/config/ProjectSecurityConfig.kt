@@ -6,6 +6,7 @@ import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.core.annotation.Order
 import org.springframework.security.config.Customizer
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity
 import org.springframework.security.config.annotation.web.configurers.CorsConfigurer
@@ -19,7 +20,16 @@ import org.springframework.security.web.csrf.CookieCsrfTokenRepository
 import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler
 import org.springframework.web.cors.CorsConfiguration
 
+@EnableMethodSecurity(prePostEnabled = true, /*securedEnabled = true, jsr250Enabled = true,*/)
+/*
+* - method level security 활성화 및 @PreAuthorize, @PostAuthorize 등 개별 annotation 동작 설정
+* - securedEnabled, jsr250Enabled element들은 @Secured, @RoleAllowed 등의 annotation을 사용해야 하는 경우에 true 값 지정
+* */
 @EnableWebSecurity
+/*
+* - @EnableMethodSecurity, @EnableWebSecurty는 configuration class 아무 곳에 붙여도 됨
+*   - 보통 @SpringBootApplication가 붙은 main 함수가 있는 클래스에 붙이는 것으로 보임
+* */
 @Configuration
 class ProjectSecurityConfig {
     /*
@@ -89,7 +99,7 @@ class ProjectSecurityConfig {
 //                    .requestMatchers("/my-cards").hasAuthority("VIEWCARDS")
                     .requestMatchers("/my-account").hasRole("USER")
                     .requestMatchers("/my-balance").hasAnyRole("USER", "ADMIN")
-                    .requestMatchers("/my-loans").hasRole("USER")
+                    .requestMatchers("/my-loans").authenticated()//.hasRole("USER") // method level security 예제를 위해 변경 
                     .requestMatchers("/my-cards").hasRole("USER")
                     .requestMatchers("/contact", "/user").authenticated()
                     .requestMatchers("/notices", "/register").permitAll()
