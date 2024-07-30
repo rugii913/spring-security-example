@@ -121,7 +121,7 @@ class ProjectSecurityConfig {
         }
 
     private fun getCsrfConfigurer(configurer: CsrfConfigurer<HttpSecurity>) = configurer
-        .ignoringRequestMatchers("/register")
+        .ignoringRequestMatchers("/register", "/contact") // 일단 "/contact" 엔드포인트를 csrf 보호 무시 대상으로 설정
         .csrfTokenRequestHandler(CsrfTokenRequestAttributeHandler().also { it.setCsrfRequestAttributeName("_csrf") }) // csrfRequestAttributeName property의 기본 값이 "_csrf"이지만 명시적으로 보여주기 위해 작성한 코드
         // CSRF 토큰을 처리하는 로직이 있는 객체를 지정
         // - CsrfFilter의 doFilterInternal() 안에서 CsrfTokenRequestAttributeHandler의 handle()을 호출
