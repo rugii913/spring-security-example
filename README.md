@@ -251,6 +251,27 @@
   - 클래스들 더 자세히 파보기
     - CsrfFilter, CsrfConfigurer, CsrfTokenRequestAttributeHandler, XorCsrfTokenRequestAttributeHandler, CookieCsrfTokenRepository 등
 
+### (고민할 이슈) method level security 작업 중 "/contact" endpoint 호출 과정에서 발생한 문제
+- CSRF 보호를 무시하도록 설정하니 호출은 가능함
+- 아마도 ProjectSecurityConfig에서 주석 처리된 아래 부분이 예상하지 않은 동작의 원인이 아닐까 추측 중
+  - .securityContext { it.requireExplicitSave(false) }
+  - .sessionManagement { it.sessionCreationPolicy(SessionCreationPolicy.ALWAYS) }
+- 위 부분은 JWT 작업 과정에서 주석 처리됨
+- 실마리? <https://m.blog.naver.com/jieuni4u/222045853732>
+  - spring security csrf sessionmanagement으로 구글링 중
+- 현재 CSRF 토큰이 오가는 상황을 확인해보면 토큰이 안 올 때도 있고, 토큰이 올 때도 있고 들쭉 날쭉함
+  - 요청에서 토큰을 보냈다면 그 다음 요청에서는 토큰이 안 오는 듯함 
+  - 이 때문에 "/contact" 호출 시 CSRF 보호를 무시하지 않도록 하면 제대로 호출이 안 되고 401 에러 발생
+
+#### 현재 문제 상황에서 CSRF 보호 관련 동작 대략적인 흐름
+- CsrfTokenRequestAttributeHandler의 handle() 메서드
+  - parameter로 Supplier<CsrfToken> deferredCsrfToken를 받음
+  - SupplierCsrfToken()으로 SupplierCsrfToken을 생성할 때 이 deferredCsrfToken을 넘김
+    - 이것이 SupplierCsrfToken type 객체의 csrfTokenSupplier 필드에 저장
+  - csrfTokenSupplier 필드가 delegate로 활용됨
+  - 그런데 이 csrfTokenSupplier는 CsrfFilter$lambda@..인 경우가 있고, CsrfAuthenticationStrategy$lambda@..인 경우가 있음
+    - 이 중 CsrfAuthenticationStrategy$lambda@..가 동작한 뒤 응답에는 CSRF 토큰이 없음
+
 ## Authorization
 
 ### Authentication과 Authorization의 차이
