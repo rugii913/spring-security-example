@@ -1,1 +1,2 @@
-rootProject.name = "springsecurityexample"
+rootProject.name = "spring-security-example"
+include("spring-security-lecture")
