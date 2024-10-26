@@ -251,6 +251,27 @@
   - 클래스들 더 자세히 파보기
     - CsrfFilter, CsrfConfigurer, CsrfTokenRequestAttributeHandler, XorCsrfTokenRequestAttributeHandler, CookieCsrfTokenRepository 등
 
+### (고민할 이슈) method level security 작업 중 "/contact" endpoint 호출 과정에서 발생한 문제
+- CSRF 보호를 무시하도록 설정하니 호출은 가능함
+- 아마도 ProjectSecurityConfig에서 주석 처리된 아래 부분이 예상하지 않은 동작의 원인이 아닐까 추측 중
+  - .securityContext { it.requireExplicitSave(false) }
+  - .sessionManagement { it.sessionCreationPolicy(SessionCreationPolicy.ALWAYS) }
+- 위 부분은 JWT 작업 과정에서 주석 처리됨
+- 실마리? <https://m.blog.naver.com/jieuni4u/222045853732>
+  - spring security csrf sessionmanagement으로 구글링 중
+- 현재 CSRF 토큰이 오가는 상황을 확인해보면 토큰이 안 올 때도 있고, 토큰이 올 때도 있고 들쭉 날쭉함
+  - 요청에서 토큰을 보냈다면 그 다음 요청에서는 토큰이 안 오는 듯함 
+  - 이 때문에 "/contact" 호출 시 CSRF 보호를 무시하지 않도록 하면 제대로 호출이 안 되고 401 에러 발생
+
+#### 현재 문제 상황에서 CSRF 보호 관련 동작 대략적인 흐름
+- CsrfTokenRequestAttributeHandler의 handle() 메서드
+  - parameter로 Supplier<CsrfToken> deferredCsrfToken를 받음
+  - SupplierCsrfToken()으로 SupplierCsrfToken을 생성할 때 이 deferredCsrfToken을 넘김
+    - 이것이 SupplierCsrfToken type 객체의 csrfTokenSupplier 필드에 저장
+  - csrfTokenSupplier 필드가 delegate로 활용됨
+  - 그런데 이 csrfTokenSupplier는 CsrfFilter$lambda@..인 경우가 있고, CsrfAuthenticationStrategy$lambda@..인 경우가 있음
+    - 이 중 CsrfAuthenticationStrategy$lambda@..가 동작한 뒤 응답에는 CSRF 토큰이 없음
+
 ## Authorization
 
 ### Authentication과 Authorization의 차이
@@ -449,3 +470,23 @@
       - 사용자가 인증을 위해 보낸 토큰을 기반으로 해시 알고리즘을 통해 계산된 signature와 토큰 내의 signature가 match하는지 여부 판단 
       - 조작 판별 시 추가적으로 인증 서버에서 해당 토큰을 무효화시키는 작업을 할 수도 있음
   - 더 자세한 내용은 https://jwt.io 참고
+
+## Method Level Security
+- Spring Security에서는 메서드 자체에 인증, 인가를 적용할 수 있음
+  - 웹 요청 경로 등을 기반으로한 인증, 인가에 더해서 사용할 수 있고
+  - 웹 기반이 아닌 애플리케이션에서도 사용 가능
+- 사용 가능한 경우들
+  - (1) invocation authorization
+    - endpoint 등 기반 보안에 더해 메서드 호출 시 role, authorities를 확인하여 2차 보안 도구로 활용 가능
+  - (2) filtering authorization
+    - 필터링 기준, role, authorities를 기반으로 어떤 데이터를 받아들이고, 어떤 데이터를 사용자에게 돌려보낼지 검증 가능
+- 사용 방법
+  - configuration 클래스에 @EnableMethodSecurity를 붙임
+    - @EnableMethodSecurity에도 다양한 element가 있음 - ex. prePostEnabled, securedEnabled, jsr250Enabled, ...
+  - 보안을 적용하고 싶은 메서드에 다음 어노테이션을 적용
+    - @PreAuthorize, @PostAuthorize, @Secured, @RoleAllowed
+      - cf. @PreAuthorize 및 @PostAuthorize가 다른 annotation보다 더 활용하기 좋음 - SpEL 활용 가능
+    - 이들 annotation을 활성화하려면 @EnableMethodSecurity의 각각 다른 element를 true 설정해야 함
+  - @PreAuthorize 및 @PostAuthorize 사용 방법
+    - 각 annotation의 value element로
+    - "hasAuthority('..')", "hasAnyAuthority('..')", "hasPermissions('..')", SpEL 등 문자열을 넘김
