@@ -449,3 +449,23 @@
       - 사용자가 인증을 위해 보낸 토큰을 기반으로 해시 알고리즘을 통해 계산된 signature와 토큰 내의 signature가 match하는지 여부 판단 
       - 조작 판별 시 추가적으로 인증 서버에서 해당 토큰을 무효화시키는 작업을 할 수도 있음
   - 더 자세한 내용은 https://jwt.io 참고
+
+## Method Level Security
+- Spring Security에서는 메서드 자체에 인증, 인가를 적용할 수 있음
+  - 웹 요청 경로 등을 기반으로한 인증, 인가에 더해서 사용할 수 있고
+  - 웹 기반이 아닌 애플리케이션에서도 사용 가능
+- 사용 가능한 경우들
+  - (1) invocation authorization
+    - endpoint 등 기반 보안에 더해 메서드 호출 시 role, authorities를 확인하여 2차 보안 도구로 활용 가능
+  - (2) filtering authorization
+    - 필터링 기준, role, authorities를 기반으로 어떤 데이터를 받아들이고, 어떤 데이터를 사용자에게 돌려보낼지 검증 가능
+- 사용 방법
+  - configuration 클래스에 @EnableMethodSecurity를 붙임
+    - @EnableMethodSecurity에도 다양한 element가 있음 - ex. prePostEnabled, securedEnabled, jsr250Enabled, ...
+  - 보안을 적용하고 싶은 메서드에 다음 어노테이션을 적용
+    - @PreAuthorize, @PostAuthorize, @Secured, @RoleAllowed
+      - cf. @PreAuthorize 및 @PostAuthorize가 다른 annotation보다 더 활용하기 좋음 - SpEL 활용 가능
+    - 이들 annotation을 활성화하려면 @EnableMethodSecurity의 각각 다른 element를 true 설정해야 함
+  - @PreAuthorize 및 @PostAuthorize 사용 방법
+    - 각 annotation의 value element로
+    - "hasAuthority('..')", "hasAnyAuthority('..')", "hasPermissions('..')", SpEL 등 문자열을 넘김
